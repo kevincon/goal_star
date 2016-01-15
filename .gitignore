@@ -1,0 +1,13 @@
+# Ignore build generated files
+build
+
+# Ignore waf lock file
+.lock-waf*
+
+# CLion
+.idea/
+CMakeLists.txt
+
+# Mac Finder
+.DS_Store
+

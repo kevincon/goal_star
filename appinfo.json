@@ -1,0 +1,18 @@
+{
+  "uuid": "9d070859-ae12-4434-a87b-8d160481e90f",
+  "shortName": "Goalie",
+  "longName": "Goalie",
+  "companyName": "Kevin Conley",
+  "versionLabel": "1.0",
+  "sdkVersion": "3",
+  "targetPlatforms": ["basalt", "chalk"],
+  "watchapp": {
+    "watchface": false
+  },
+  "appKeys": {
+    "dummy": 0
+  },
+  "resources": {
+    "media": []
+  }
+}
