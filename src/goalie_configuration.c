@@ -12,7 +12,7 @@ typedef enum {
 static GoalieConfiguration s_configuration;
 
 static void prv_clear_all_persisted_data(void) {
-  for (int key = 0; key < GoalieConfigurationPersistedDataKeys_Count; key++) {
+  for (uint32_t key = 0; key < GoalieConfigurationPersistedDataKeys_Count; key++) {
     persist_delete(key);
   }
 }
@@ -34,7 +34,8 @@ static bool prv_migrate_configuration_if_necessary(void) {
     return false;
   }
 
-  const uint32_t persisted_version = persist_read_int(GoalieConfigurationPersistedDataKeys_Version);
+  const uint32_t persisted_version = (uint32_t)persist_read_int(
+    GoalieConfigurationPersistedDataKeys_Version);
   switch (persisted_version) {
     case GOALIE_CONFIGURATION_CURRENT_VERSION:
       // Valid version

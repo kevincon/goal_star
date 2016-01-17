@@ -50,7 +50,7 @@ static void prv_progress_visualization_layer_update_proc(Layer *layer, GContext*
 
   const uint32_t current_progress = prv_get_current_progress_towards_goal();
 
-  const GoalieConfiguration *configuration = goalie_configuration_get_configuration();
+  GoalieConfiguration *configuration = goalie_configuration_get_configuration();
   const HealthValue goal = configuration->goal_value;
 
   const uint32_t progress_percentage = current_progress * 100 / goal;
@@ -116,10 +116,10 @@ static GRect prv_get_rect_inscribed_in_circle_circumscribed_in_rect(
   }
 
   const int16_t radius =
-    (circumscribed_in_rect->size.w / 2) - circle_inset_thickness;
+    (int16_t)(circumscribed_in_rect->size.w / 2) - circle_inset_thickness;
 
   // Approximation of (2 * radius) / sqrt(2)
-  const int16_t frame_side = (2 * radius) * 408 / 577;
+  const int16_t frame_side = (int16_t)((2 * radius) * 408 / 577);
 
   GRect rect = (GRect) {
     .size = GSize(frame_side, frame_side),
