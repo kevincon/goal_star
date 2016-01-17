@@ -9,6 +9,7 @@
 
 typedef struct {
   Window *window;
+  TextLayer *title_layer;
   MenuLayer *menu_layer;
 } GoalieConfigurationWindowData;
 
@@ -47,6 +48,23 @@ static void prv_window_load(Window *window) {
   Layer *window_root_layer = window_get_root_layer(window);
   const GRect window_root_layer_bounds = layer_get_bounds(window_root_layer);
 
+  const GRect title_layer_frame = (GRect) {
+#if PBL_RECT
+    // Adjust for font cap offset
+    .origin = GPoint(0, -2),
+#endif
+    .size = GSize(window_root_layer_bounds.size.w, STATUS_BAR_LAYER_HEIGHT),
+  };
+  data->title_layer = text_layer_create(title_layer_frame);
+  TextLayer *title_layer = data->title_layer;
+  text_layer_set_text_alignment(title_layer, GTextAlignmentCenter);
+  text_layer_set_overflow_mode(title_layer, GTextOverflowModeTrailingEllipsis);
+  text_layer_set_background_color(title_layer, GColorClear);
+  text_layer_set_text_color(title_layer, GColorBlack);
+  text_layer_set_font(title_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
+  text_layer_set_text(title_layer, PBL_IF_RECT_ELSE("Goalie Configuration", "Config"));
+  layer_add_child(window_root_layer, text_layer_get_layer(title_layer));
+
   const GEdgeInsets menu_layer_insets = PBL_IF_RECT_ELSE(GEdgeInsets(STATUS_BAR_LAYER_HEIGHT, 0, 0),
                                                          GEdgeInsets(STATUS_BAR_LAYER_HEIGHT, 0));
   const GRect menu_layer_frame = grect_inset(window_root_layer_bounds, menu_layer_insets);
@@ -71,6 +89,7 @@ static void prv_window_unload(Window *window) {
 
   if (data) {
     menu_layer_destroy(data->menu_layer);
+    text_layer_destroy(data->title_layer);
     window_destroy(data->window);
   }
 
