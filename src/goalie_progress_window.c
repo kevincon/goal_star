@@ -1,5 +1,8 @@
 #include "goalie_progress_window.h"
 
+#include "goalie_configuration.h"
+#include "goalie_configuration_window.h"
+
 #include <pebble.h>
 
 #include <inttypes.h>
@@ -46,7 +49,10 @@ static void prv_progress_visualization_layer_update_proc(Layer *layer, GContext*
 //    health_service_metric_accessible(goal_type, start_of_today, end_of_today);
 
   const uint32_t current_progress = prv_get_current_progress_towards_goal();
-  const uint32_t goal = prv_get_goal();
+
+  const GoalieConfiguration *configuration = goalie_configuration_get_configuration();
+  const HealthValue goal = configuration->goal_value;
+
   const uint32_t progress_percentage = current_progress * 100 / goal;
   const int32_t progress_angle_end = progress_percentage * TRIG_MAX_ANGLE / 100;
   graphics_context_set_fill_color(ctx, GColorIslamicGreen);
@@ -162,6 +168,14 @@ static void prv_window_unload(Window *window) {
   free(data);
 }
 
+static void prv_window_select_click_handler(ClickRecognizerRef recognizer, void *context) {
+  goalie_configuration_window_push();
+}
+
+static void prv_window_click_config_provider(void *context) {
+  window_single_click_subscribe(BUTTON_ID_SELECT, prv_window_select_click_handler);
+}
+
 void goalie_progress_window_push(void) {
   GoalieProgressWindowData *data = calloc(1, sizeof(*data));
   if (!data) {
@@ -175,6 +189,7 @@ void goalie_progress_window_push(void) {
     .load = prv_window_load,
     .unload = prv_window_unload,
   });
+  window_set_click_config_provider(window, prv_window_click_config_provider);
   window_set_user_data(window, data);
 
   const bool animated = true;
