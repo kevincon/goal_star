@@ -54,6 +54,30 @@ static int16_t prv_goal_type_get_index_of_current_choice(void) {
   return -1;
 }
 
+// Goal Value
+/////////////
+
+static int32_t prv_goal_value_get_lower_bound(void) {
+  return 1;
+}
+
+static int32_t prv_goal_value_get_upper_bound(void) {
+  return 100000;
+}
+
+static void prv_goal_value_number_selected(NumberWindow *number_window, void *context) {
+  GoalieConfiguration *configuration = goalie_configuration_get_configuration();
+  configuration->goal_value = number_window_get_value(number_window);
+
+  const bool animated = true;
+  window_stack_pop(animated);
+}
+
+static int32_t prv_goal_value_get_current_value(void) {
+  GoalieConfiguration *configuration = goalie_configuration_get_configuration();
+  return configuration->goal_value;
+}
+
 // Common
 //////////
 
@@ -61,13 +85,25 @@ static const GoalieConfigurationMenuDataSourceOption s_options[] = {
   {
     .title = "Goal Type",
     .type = GoalieConfigurationMenuDataSourceOptionType_MultipleChoice,
-    .get_index_of_current_choice = prv_goal_type_get_index_of_current_choice,
     .choice_callbacks = {
-      .get_string_for_index = prv_goal_type_get_string_for_index,
-      .get_num_choices = prv_goal_type_get_num_choices,
-      .choice_made = prv_goal_type_choice_made,
+      .get_index_of_current_choice = prv_goal_type_get_index_of_current_choice,
+      .callbacks = {
+        .get_string_for_index = prv_goal_type_get_string_for_index,
+        .get_num_choices = prv_goal_type_get_num_choices,
+        .choice_made = prv_goal_type_choice_made,
+      },
     },
   },
+  {
+    .title = "Goal Value",
+    .type = GoalieConfigurationMenuDataSourceOptionType_Number,
+    .number_callbacks = {
+      .get_lower_bound = prv_goal_value_get_lower_bound,
+      .get_upper_bound = prv_goal_value_get_upper_bound,
+      .number_selected = prv_goal_value_number_selected,
+      .get_current_value = prv_goal_value_get_current_value,
+    }
+  }
 };
 
 const GoalieConfigurationMenuDataSourceOption *goalie_configuration_menu_data_source_get_option_at_index(
@@ -86,11 +122,13 @@ void goalie_configuration_menu_data_source_get_current_choice_string_for_option_
 
   switch (option->type) {
     case GoalieConfigurationMenuDataSourceOptionType_MultipleChoice: {
-      const int16_t current_choice_index = option->get_index_of_current_choice();
+      const int16_t current_choice_index =
+        option->choice_callbacks.get_index_of_current_choice();
       if (current_choice_index != -1) {
         char current_choice_string[GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH] =
           {0};
-        option->choice_callbacks.get_string_for_index(current_choice_index, current_choice_string);
+        option->choice_callbacks.callbacks.get_string_for_index(current_choice_index,
+                                                                current_choice_string);
         strncpy(result, current_choice_string,
                 GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH);
       }

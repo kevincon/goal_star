@@ -11,15 +11,16 @@ typedef struct {
   Window *window;
   TextLayer *title_layer;
   MenuLayer *menu_layer;
+  NumberWindow *number_window;
 } GoalieConfigurationWindowData;
 
 static uint16_t prv_menu_layer_get_num_rows_callback(MenuLayer *menu_layer, uint16_t section_index,
-                                                     void *data) {
+                                                     void *context) {
   return goalie_configuration_menu_data_source_get_num_options();
 }
 
 static void prv_menu_layer_draw_row_callback(GContext *ctx, const Layer *cell_layer,
-                                             MenuIndex *cell_index, void *data) {
+                                             MenuIndex *cell_index, void *context) {
   const GoalieConfigurationMenuDataSourceOption *option =
     goalie_configuration_menu_data_source_get_option_at_index(cell_index->row);
   char subtitle[GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH] = {0};
@@ -29,7 +30,8 @@ static void prv_menu_layer_draw_row_callback(GContext *ctx, const Layer *cell_la
         cell_index->row, subtitle);
       break;
     case GoalieConfigurationMenuDataSourceOptionType_Number:
-      // TODO
+      snprintf(subtitle, GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH, "%"PRId32"",
+               option->number_callbacks.get_current_value());
       break;
     default:
       return;
@@ -49,26 +51,38 @@ static int16_t prv_menu_layer_get_cell_height(MenuLayer *menu_layer, MenuIndex *
 #endif
 
 static void prv_menu_layer_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index,
-                                           void *callback_context) {
+                                           void *context) {
+  GoalieConfigurationWindowData *data = context;
   const GoalieConfigurationMenuDataSourceOption *option =
     goalie_configuration_menu_data_source_get_option_at_index(cell_index->row);
 
   switch (option->type) {
     case GoalieConfigurationMenuDataSourceOptionType_MultipleChoice: {
-      const int16_t current_choice_index = option->get_index_of_current_choice();
+      const int16_t current_choice_index = option->choice_callbacks.get_index_of_current_choice();
       const GoalieConfigurationOptionMenuWindowSettings settings =
         (GoalieConfigurationOptionMenuWindowSettings) {
           .option_title = option->title,
-          .callbacks = option->choice_callbacks,
+          .callbacks = option->choice_callbacks.callbacks,
           .current_choice = (current_choice_index == -1) ? (uint16_t)0 :
                                                            (uint16_t)current_choice_index,
         };
       goalie_configuration_option_menu_window_push(&settings);
       break;
     }
-    case GoalieConfigurationMenuDataSourceOptionType_Number:
-      // TODO
+    case GoalieConfigurationMenuDataSourceOptionType_Number: {
+      number_window_destroy(data->number_window);
+      data->number_window = number_window_create(option->title, (NumberWindowCallbacks) {
+        .selected = option->number_callbacks.number_selected,
+      }, data);
+      NumberWindow *number_window = data->number_window;
+      number_window_set_value(number_window, option->number_callbacks.get_current_value());
+      number_window_set_min(number_window, option->number_callbacks.get_lower_bound());
+      number_window_set_max(number_window, option->number_callbacks.get_upper_bound());
+      number_window_set_step_size(number_window, 100);
+      const bool animated = true;
+      window_stack_push(number_window_get_window(number_window), animated);
       break;
+    }
     default:
       return;
   }
@@ -123,6 +137,7 @@ static void prv_window_unload(Window *window) {
   GoalieConfigurationWindowData *data = window_get_user_data(window);
 
   if (data) {
+    number_window_destroy(data->number_window);
     menu_layer_destroy(data->menu_layer);
     text_layer_destroy(data->title_layer);
     window_destroy(data->window);

@@ -8,8 +8,7 @@
 
 typedef int16_t (*GoalieConfigurationMenuDataSourceOptionMultipleChoiceGetIndexOfCurrentChoiceCallback)(void);
 
-typedef int16_t (*GoalieConfigurationMenuDataSourceOptionNumberGetLowerBoundCallback)(void);
-typedef int16_t (*GoalieConfigurationMenuDataSourceOptionNumberGetUpperBoundCallback)(void);
+typedef int32_t (*GoalieConfigurationMenuDataSourceOptionNumberGetNumberCallback)(void);
 
 typedef enum {
   GoalieConfigurationMenuDataSourceOptionType_MultipleChoice,
@@ -24,15 +23,16 @@ typedef struct {
   union {
     // GoalieConfigurationMenuDataSourceOptionType_MultipleChoice
     struct {
-      GoalieConfigurationOptionMenuWindowCallbacks choice_callbacks;
+      GoalieConfigurationOptionMenuWindowCallbacks callbacks;
       GoalieConfigurationMenuDataSourceOptionMultipleChoiceGetIndexOfCurrentChoiceCallback get_index_of_current_choice;
-    };
+    } choice_callbacks;
     // GoalieConfigurationMenuDataSourceOptionType_Number
     struct {
-      GoalieConfigurationMenuDataSourceOptionNumberGetLowerBoundCallback get_lower_bound;
-      GoalieConfigurationMenuDataSourceOptionNumberGetUpperBoundCallback get_upper_bound;
+      GoalieConfigurationMenuDataSourceOptionNumberGetNumberCallback get_lower_bound;
+      GoalieConfigurationMenuDataSourceOptionNumberGetNumberCallback get_upper_bound;
+      GoalieConfigurationMenuDataSourceOptionNumberGetNumberCallback get_current_value;
       NumberWindowCallback number_selected;
-    };
+    } number_callbacks;
   };
 } GoalieConfigurationMenuDataSourceOption;
 
