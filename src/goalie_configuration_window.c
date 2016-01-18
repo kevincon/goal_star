@@ -55,10 +55,13 @@ static void prv_menu_layer_select_callback(MenuLayer *menu_layer, MenuIndex *cel
 
   switch (option->type) {
     case GoalieConfigurationMenuDataSourceOptionType_MultipleChoice: {
+      const int16_t current_choice_index = option->get_index_of_current_choice();
       const GoalieConfigurationOptionMenuWindowSettings settings =
         (GoalieConfigurationOptionMenuWindowSettings) {
           .option_title = option->title,
           .callbacks = option->choice_callbacks,
+          .current_choice = (current_choice_index == -1) ? (uint16_t)0 :
+                                                           (uint16_t)current_choice_index,
         };
       goalie_configuration_option_menu_window_push(&settings);
       break;

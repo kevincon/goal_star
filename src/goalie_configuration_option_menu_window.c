@@ -19,10 +19,56 @@ static uint16_t prv_menu_layer_get_num_rows_callback(MenuLayer *menu_layer, uint
 
 static void prv_menu_layer_draw_row_callback(GContext *ctx, const Layer *cell_layer,
                                              MenuIndex *cell_index, void *context) {
+  const bool row_is_highlighted = menu_cell_layer_is_highlighted(cell_layer);
+
   GoalieConfigurationOptionMenuWindowData *data = context;
   char title[GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH] = {0};
   data->settings.callbacks.get_string_for_index(cell_index->row, title);
-  menu_cell_basic_draw(ctx, cell_layer, title, NULL, NULL);
+
+  const GRect cell_layer_bounds = layer_get_bounds(cell_layer);
+
+  const int16_t radio_button_horizontal_padding = 10;
+  const int16_t radio_button_radius = 7;
+
+  int16_t right_inset = (radio_button_horizontal_padding + radio_button_radius) * 2;
+  int16_t left_inset = 5;
+#if PBL_ROUND
+  right_inset += 25;
+#endif
+
+  const GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
+  const int16_t font_height = 24;
+  const int16_t font_cap_height = 5;
+  const int16_t vertical_inset = (cell_layer_bounds.size.h - font_height) / 2;
+  GRect inset_cell_layer_bounds = grect_inset(cell_layer_bounds,
+                                              GEdgeInsets(vertical_inset, right_inset,
+                                                          vertical_inset, left_inset));
+  inset_cell_layer_bounds.origin.y -= font_cap_height;
+  const GTextAlignment text_alignment = PBL_IF_RECT_ELSE(GTextAlignmentLeft, GTextAlignmentRight);
+  graphics_draw_text(ctx, title, font, inset_cell_layer_bounds, GTextOverflowModeTrailingEllipsis,
+                     text_alignment, NULL);
+
+  const GRect radio_button_container_frame = grect_inset(
+    cell_layer_bounds,
+    GEdgeInsets(0, 0, 0,
+                inset_cell_layer_bounds.origin.x + inset_cell_layer_bounds.size.w + radio_button_horizontal_padding));
+  GRect radio_button_frame = (GRect) { .size = GSize(radio_button_radius * 2,
+                                                     radio_button_radius * 2) };
+  const GAlign radio_button_alignment = PBL_IF_RECT_ELSE(GAlignCenter, GAlignLeft);
+  grect_align(&radio_button_frame, &radio_button_container_frame, radio_button_alignment,
+              true /* clip */);
+
+  graphics_context_set_fill_color(ctx, row_is_highlighted ? GColorWhite : GColorBlack);
+  const int16_t radio_button_outer_ring_thickness = 2;
+  graphics_fill_radial(ctx, radio_button_frame, GOvalScaleModeFitCircle,
+                       radio_button_outer_ring_thickness, 0, TRIG_MAX_ANGLE);
+
+  if (cell_index->row == data->settings.current_choice) {
+    radio_button_frame = grect_crop(radio_button_frame, radio_button_outer_ring_thickness + 2);
+    graphics_fill_radial(ctx, radio_button_frame, GOvalScaleModeFitCircle,
+                         radio_button_radius - radio_button_outer_ring_thickness - 1, 0,
+                         TRIG_MAX_ANGLE);
+  }
 }
 
 #if PBL_ROUND
@@ -87,6 +133,8 @@ static void prv_window_load(Window *window) {
   menu_layer_set_normal_colors(menu_layer, GColorWhite, GColorBlack);
   menu_layer_set_highlight_colors(menu_layer, GColorCobaltBlue, GColorWhite);
   menu_layer_set_click_config_onto_window(menu_layer, window);
+  menu_layer_set_selected_index(menu_layer, MenuIndex(0, data->settings.current_choice),
+                                MenuRowAlignCenter, false /* animated */);
   layer_add_child(window_root_layer, menu_layer_get_layer(menu_layer));
 }
 
