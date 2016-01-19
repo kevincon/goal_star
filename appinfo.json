@@ -13,6 +13,12 @@
     "dummy": 0
   },
   "resources": {
-    "media": []
+    "media": [
+      {
+      "type": "bitmap",
+      "name": "CHECKMARK",
+      "file": "images/white_checkmark.png"
+      }
+    ]
   }
 }

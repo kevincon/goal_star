@@ -1,8 +1,3 @@
-//
-// Created by Kevin Conley on 1/19/16.
-//
+#pragma once
 
-#ifndef PEBBLE_APP_GOALIE_PROMPT_WINDOW_H
-#define PEBBLE_APP_GOALIE_PROMPT_WINDOW_H
-
-#endif //PEBBLE_APP_GOALIE_PROMPT_WINDOW_H
+void goalie_prompt_window_push(void);
