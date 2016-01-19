@@ -7,6 +7,8 @@
 
 #include <inttypes.h>
 
+#define MIN(a, b) (a) < (b) ? (a) : (b)
+
 #define PROGRESS_VISUALIZATION_RADIAL_THICKNESS PBL_IF_RECT_ELSE(10, 15)
 #define PROGRESS_GOAL_TEXT_MAX_STRING_LENGTH 6
 
@@ -16,25 +18,30 @@ typedef struct {
   Layer *progress_text_layer;
   Layer *config_hint_text_layer;
   AppTimer *config_hint_timer;
+  Animation *intro_animation;
+  AnimationProgress intro_animation_progress;
 } GoalieProgressWindowData;
 
+static int64_t prv_interpolate_int64_linear(int64_t from, int64_t to, AnimationProgress progress) {
+  return from + ((progress * (to - from)) / ANIMATION_NORMALIZED_MAX);
+}
+
 static uint32_t prv_get_current_progress_towards_goal(void) {
+  const GoalieConfiguration *configuration = goalie_configuration_get_configuration();
+  const HealthValue goal = configuration->goal_value;
   // TODO
-  return 5280;
+  return MIN((uint32_t)5280, (uint32_t)goal);
 }
 
-static uint32_t prv_get_goal(void) {
-  // TODO
-  return 10000;
-}
-
-static void prv_get_current_progress_towards_goal_as_string(
-  char buffer[PROGRESS_GOAL_TEXT_MAX_STRING_LENGTH + 1]) {
-  snprintf(buffer, PROGRESS_GOAL_TEXT_MAX_STRING_LENGTH + 1,
-           "%"PRIu32"", prv_get_current_progress_towards_goal());
+static void prv_get_animated_progress_towards_goal_as_string(
+  AnimationProgress animation_progress, char *buffer) {
+  const uint32_t animated_progress = (uint32_t)prv_interpolate_int64_linear(
+    0, prv_get_current_progress_towards_goal(), animation_progress);
+  snprintf(buffer, PROGRESS_GOAL_TEXT_MAX_STRING_LENGTH + 1, "%"PRIu32"", animated_progress);
 }
 
 static void prv_progress_visualization_layer_update_proc(Layer *layer, GContext* ctx) {
+  const GoalieProgressWindowData *data = window_get_user_data(layer_get_window(layer));
   const GRect layer_bounds = layer_get_bounds(layer);
 
   const GOvalScaleMode oval_scale_mode = GOvalScaleModeFitCircle;
@@ -52,10 +59,13 @@ static void prv_progress_visualization_layer_update_proc(Layer *layer, GContext*
 
   const uint32_t current_progress = prv_get_current_progress_towards_goal();
 
+  const uint32_t animated_progress =
+    (uint32_t)prv_interpolate_int64_linear(0, current_progress, data->intro_animation_progress);
+
   GoalieConfiguration *configuration = goalie_configuration_get_configuration();
   const HealthValue goal = configuration->goal_value;
 
-  const uint32_t progress_percentage = current_progress * 100 / goal;
+  const uint32_t progress_percentage = animated_progress * 100 / goal;
   const int32_t progress_angle_end = progress_percentage * TRIG_MAX_ANGLE / 100;
   graphics_context_set_fill_color(ctx, GColorIslamicGreen);
   graphics_fill_radial(ctx, layer_bounds, oval_scale_mode, PROGRESS_VISUALIZATION_RADIAL_THICKNESS,
@@ -99,6 +109,7 @@ static GRect prv_create_rect_aligned_inside_rect_with_height(const GRect *inside
 }
 
 static void prv_progress_text_layer_update_proc(Layer *layer, GContext *ctx) {
+  const GoalieProgressWindowData *data = window_get_user_data(layer_get_window(layer));
   const GRect layer_bounds = layer_get_bounds(layer);
 
   graphics_context_set_text_color(ctx, GColorBlack);
@@ -122,7 +133,9 @@ static void prv_progress_text_layer_update_proc(Layer *layer, GContext *ctx) {
 
   // Draw the text for the current progress towards the goal
   char goal_progress_text[PROGRESS_GOAL_TEXT_MAX_STRING_LENGTH + 1] = {0};
-  prv_get_current_progress_towards_goal_as_string(goal_progress_text);
+
+  prv_get_animated_progress_towards_goal_as_string(data->intro_animation_progress,
+                                                   goal_progress_text);
   const GRect goal_progress_text_frame = prv_create_rect_aligned_inside_rect_with_height(
     &text_container_frame, goal_progress_font_height, GAlignTop);
   graphics_draw_text(ctx, goal_progress_text, goal_progress_font, goal_progress_text_frame,
@@ -160,6 +173,30 @@ static void prv_config_hint_timer_handler(void *context) {
   GoalieProgressWindowData *data = context;
   layer_set_hidden(data->config_hint_text_layer, true);
   data->config_hint_timer = NULL;
+}
+
+static void prv_intro_animation_update(Animation *animation, const AnimationProgress progress) {
+  const Window *top_window = window_stack_get_top_window();
+  GoalieProgressWindowData *data = window_get_user_data(top_window);
+  if (data) {
+    data->intro_animation_progress = progress;
+    layer_mark_dirty(window_get_root_layer(top_window));
+  }
+}
+
+static const AnimationImplementation s_intro_animation_implementation = {
+  .update = prv_intro_animation_update,
+};
+
+static void prv_window_appear(Window *window) {
+  GoalieProgressWindowData *data = window_get_user_data(window);
+
+  data->intro_animation = animation_create();
+  Animation *intro_animation = data->intro_animation;
+  animation_set_implementation(intro_animation, &s_intro_animation_implementation);
+  animation_set_duration(intro_animation, 1000);
+  animation_set_curve(intro_animation, AnimationCurveEaseInOut);
+  animation_schedule(intro_animation);
 }
 
 static void prv_window_load(Window *window) {
@@ -206,6 +243,14 @@ static void prv_window_load(Window *window) {
   app_timer_register(config_hint_timer_timeout_ms, prv_config_hint_timer_handler, data);
 }
 
+static void prv_window_disappear(Window *window) {
+  GoalieProgressWindowData *data = window_get_user_data(window);
+
+  if (data->intro_animation) {
+    animation_unschedule(data->intro_animation);
+  }
+}
+
 static void prv_window_unload(Window *window) {
   GoalieProgressWindowData *data = window_get_user_data(window);
 
@@ -241,6 +286,8 @@ void goalie_progress_window_push(void) {
 
   window_set_window_handlers(window, (WindowHandlers) {
     .load = prv_window_load,
+    .appear = prv_window_appear,
+    .disappear = prv_window_disappear,
     .unload = prv_window_unload,
   });
   window_set_click_config_provider(window, prv_window_click_config_provider);
