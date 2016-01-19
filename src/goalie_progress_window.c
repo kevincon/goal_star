@@ -60,6 +60,17 @@ static void prv_progress_visualization_layer_update_proc(Layer *layer, GContext*
                        0, progress_angle_end);
 }
 
+static const char *prv_get_units_string_for_goal_type(HealthMetric goal_type) {
+  switch (goal_type) {
+    case HealthMetricStepCount:
+      return "STEPS";
+    case HealthMetricWalkedDistanceMeters:
+      return "METERS";
+    default:
+      return "???";
+  }
+}
+
 static GRect prv_create_rect_aligned_inside_rect_with_height(const GRect *inside_rect,
                                                              int16_t height, GAlign alignment) {
   if (!inside_rect) {
@@ -73,7 +84,7 @@ static GRect prv_create_rect_aligned_inside_rect_with_height(const GRect *inside
   return rect;
 }
 
-static void prv_progress_text_layer_update_proc(Layer *layer, GContext* ctx) {
+static void prv_progress_text_layer_update_proc(Layer *layer, GContext *ctx) {
   const GRect layer_bounds = layer_get_bounds(layer);
 
   graphics_context_set_text_color(ctx, GColorBlack);
@@ -104,9 +115,12 @@ static void prv_progress_text_layer_update_proc(Layer *layer, GContext* ctx) {
                      text_overflow_mode, text_alignment, NULL);
 
   // Draw the text for the goal type label
+  GoalieConfiguration *configuration = goalie_configuration_get_configuration();
+  const HealthMetric goal_type = configuration->goal_type;
+  const char *goal_type_string = prv_get_units_string_for_goal_type(goal_type);
   const GRect goal_progress_type_text_frame = prv_create_rect_aligned_inside_rect_with_height(
     &text_container_frame, goal_progress_type_font_height, GAlignBottom);
-  graphics_draw_text(ctx, "STEPS", goal_progress_type_font, goal_progress_type_text_frame,
+  graphics_draw_text(ctx, goal_type_string, goal_progress_type_font, goal_progress_type_text_frame,
                      text_overflow_mode, text_alignment, NULL);
 }
 static GRect prv_get_rect_inscribed_in_circle_circumscribed_in_rect(
