@@ -83,7 +83,7 @@ static int32_t prv_goal_value_get_current_value(void) {
 
 static const GoalieConfigurationMenuDataSourceOption s_options[] = {
   {
-    .title = "Goal Type",
+    .title = "Goal type",
     .type = GoalieConfigurationMenuDataSourceOptionType_MultipleChoice,
     .choice_callbacks = {
       .get_index_of_current_choice = prv_goal_type_get_index_of_current_choice,
@@ -95,7 +95,7 @@ static const GoalieConfigurationMenuDataSourceOption s_options[] = {
     },
   },
   {
-    .title = "Goal Value",
+    .title = "Goal value",
     .type = GoalieConfigurationMenuDataSourceOptionType_Number,
     .number_callbacks = {
       .get_lower_bound = prv_goal_value_get_lower_bound,
