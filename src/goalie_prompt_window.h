@@ -1,0 +1,8 @@
+//
+// Created by Kevin Conley on 1/19/16.
+//
+
+#ifndef PEBBLE_APP_GOALIE_PROMPT_WINDOW_H
+#define PEBBLE_APP_GOALIE_PROMPT_WINDOW_H
+
+#endif //PEBBLE_APP_GOALIE_PROMPT_WINDOW_H
