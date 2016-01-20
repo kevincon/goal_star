@@ -1,7 +1,8 @@
 #include "goalie_progress_window.h"
 
-#include "goalie_configuration.h"
+#include "../common/goalie_configuration.h"
 #include "goalie_configuration_window.h"
+#include "goalie_prompt_window.h"
 
 #include <pebble.h>
 
@@ -176,8 +177,10 @@ static void prv_health_event_handler(HealthEventType event, void *context) {
   if (!data) {
     return;
   }
-  data->current_progress = prv_get_current_progress();
-  layer_mark_dirty(window_get_root_layer(data->window));
+  if (event == HealthEventMovementUpdate) {
+    data->current_progress = prv_get_current_progress();
+    layer_mark_dirty(window_get_root_layer(data->window));
+  }
 }
 
 static void prv_window_appear(Window *window) {
@@ -237,6 +240,12 @@ static void prv_window_load(Window *window) {
   const uint32_t config_hint_timer_timeout_ms = 4000;
   data->config_hint_timer = app_timer_register(config_hint_timer_timeout_ms,
                                                prv_config_hint_timer_handler, data);
+
+  if (!app_worker_is_running()) {
+    const bool animated = false;
+    window_stack_pop(animated);
+    goalie_prompt_window_push();
+  }
 }
 
 static void prv_window_disappear(Window *window) {

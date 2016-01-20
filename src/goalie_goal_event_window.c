@@ -1,6 +1,6 @@
 #include "goalie_goal_event_window.h"
 
-#include "goalie_configuration.h"
+#include "../common/goalie_configuration.h"
 
 #include <pebble.h>
 

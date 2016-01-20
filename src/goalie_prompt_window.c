@@ -25,8 +25,25 @@ static void prv_text_layer_update_proc(Layer *layer, GContext* ctx) {
 }
 
 static void prv_select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  window_stack_pop(false /* animated */);
-  goalie_progress_window_push();
+  const AppWorkerResult result = app_worker_launch();
+  const bool animated = false;
+  switch (result) {
+    case APP_WORKER_RESULT_ALREADY_RUNNING:
+    case APP_WORKER_RESULT_ASKING_CONFIRMATION:
+    case APP_WORKER_RESULT_SUCCESS:
+      window_stack_pop(animated);
+      goalie_progress_window_push();
+      break;
+    case APP_WORKER_RESULT_DIFFERENT_APP:
+    case APP_WORKER_RESULT_NO_WORKER:
+    case APP_WORKER_RESULT_NOT_RUNNING:
+      window_stack_pop(animated);
+      goalie_prompt_window_push();
+      break;
+    default:
+      window_stack_pop(animated);
+      break;
+  }
 }
 
 static void prv_click_config_provider(void *context) {

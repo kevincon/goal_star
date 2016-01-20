@@ -1,6 +1,10 @@
 #pragma once
 
+#if GOALIE_WORKER
+#include <pebble_worker.h>
+#else
 #include <pebble.h>
+#endif
 
 #define GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH 30
 

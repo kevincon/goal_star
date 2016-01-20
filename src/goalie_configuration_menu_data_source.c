@@ -1,6 +1,6 @@
 #include "goalie_configuration_menu_data_source.h"
 
-#include "goalie_configuration.h"
+#include "../common/goalie_configuration.h"
 
 #define MAKE_CHOICE_STRUCT(TYPE) \
 typedef struct { \
