@@ -49,13 +49,14 @@ static void prv_goal_reached_sequence_layer_update_proc(Layer *layer, GContext *
                                                            data);
   }
 
-  // TODO use goal configuration to report what exact goal was reached
+  char text[GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH] = {0};
+  goalie_configuration_get_goal_summary_string(text);
   graphics_context_set_text_color(ctx, GColorBlack);
   const GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
   const int16_t font_height = 24;
   const GRect text_frame = GRect(0, sequence_frame.origin.y + sequence_frame.size.h,
                                  layer_bounds.size.w, font_height);
-  graphics_draw_text(ctx, "Goal reached!", font, text_frame, GTextOverflowModeTrailingEllipsis,
+  graphics_draw_text(ctx, text, font, text_frame, GTextOverflowModeTrailingEllipsis,
                      GTextAlignmentCenter, NULL);
 }
 

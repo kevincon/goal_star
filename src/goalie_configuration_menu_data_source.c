@@ -39,15 +39,14 @@ static void prv_goal_type_get_string_for_index(
 }
 
 static void prv_goal_type_choice_made(uint16_t choice_index) {
-  GoalieConfiguration *configuration = goalie_configuration_get_configuration();
-  configuration->goal_type = s_goal_type_options[choice_index].choice_value;
+  goalie_configuration_set_goal_type(s_goal_type_options[choice_index].choice_value);
 }
 
 static int16_t prv_goal_type_get_index_of_current_choice(void) {
-  GoalieConfiguration *configuration = goalie_configuration_get_configuration();
+  const HealthMetric current_goal_type = goalie_configuration_get_goal_type();
   for (unsigned int choice_index = 0; choice_index < ARRAY_LENGTH(s_goal_type_options);
        choice_index++) {
-    if (s_goal_type_options[choice_index].choice_value == configuration->goal_type) {
+    if (s_goal_type_options[choice_index].choice_value == current_goal_type) {
       return choice_index;
     }
   }
@@ -66,16 +65,14 @@ static int32_t prv_goal_value_get_upper_bound(void) {
 }
 
 static void prv_goal_value_number_selected(NumberWindow *number_window, void *context) {
-  GoalieConfiguration *configuration = goalie_configuration_get_configuration();
-  configuration->goal_value = number_window_get_value(number_window);
+  goalie_configuration_set_goal_value(number_window_get_value(number_window));
 
   const bool animated = true;
   window_stack_pop(animated);
 }
 
 static int32_t prv_goal_value_get_current_value(void) {
-  GoalieConfiguration *configuration = goalie_configuration_get_configuration();
-  return configuration->goal_value;
+  return goalie_configuration_get_goal_value();
 }
 
 // Common

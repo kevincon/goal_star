@@ -28,8 +28,7 @@ static int64_t prv_interpolate_int64_linear(int64_t from, int64_t to, AnimationP
 }
 
 static uint32_t prv_get_current_progress_towards_goal(const GoalieProgressWindowData *data) {
-  const GoalieConfiguration *configuration = goalie_configuration_get_configuration();
-  const HealthValue goal = configuration->goal_value;
+  const HealthValue goal = goalie_configuration_get_goal_value();
   return MIN((uint32_t)data->current_progress, (uint32_t)goal);
 }
 
@@ -55,8 +54,7 @@ static void prv_progress_visualization_layer_update_proc(Layer *layer, GContext*
   const uint32_t animated_progress =
     (uint32_t)prv_interpolate_int64_linear(0, current_progress, data->intro_animation_progress);
 
-  GoalieConfiguration *configuration = goalie_configuration_get_configuration();
-  const HealthValue goal = configuration->goal_value;
+  const HealthValue goal = goalie_configuration_get_goal_value();
 
   const uint32_t progress_percentage = animated_progress * 100 / goal;
   const int32_t progress_angle_end = progress_percentage * TRIG_MAX_ANGLE / 100;
@@ -75,17 +73,6 @@ static void prv_config_hint_text_layer_update_proc(Layer *layer, GContext *ctx) 
 
   graphics_draw_text(ctx, "Click Select to configure", font, text_frame,
                      GTextOverflowModeTrailingEllipsis, GTextAlignmentCenter, NULL);
-}
-
-static const char *prv_get_units_string_for_goal_type(HealthMetric goal_type) {
-  switch (goal_type) {
-    case HealthMetricStepCount:
-      return "STEPS";
-    case HealthMetricWalkedDistanceMeters:
-      return "METERS";
-    default:
-      return "???";
-  }
 }
 
 static GRect prv_create_rect_aligned_inside_rect_with_height(const GRect *inside_rect,
@@ -134,9 +121,8 @@ static void prv_progress_text_layer_update_proc(Layer *layer, GContext *ctx) {
                      text_overflow_mode, text_alignment, NULL);
 
   // Draw the text for the goal type label
-  GoalieConfiguration *configuration = goalie_configuration_get_configuration();
-  const HealthMetric goal_type = configuration->goal_type;
-  const char *goal_type_string = prv_get_units_string_for_goal_type(goal_type);
+  char goal_type_string[GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH] = {0};
+  goalie_configuration_get_goal_type_units_string(goal_type_string, true /* all caps */);
   const GRect goal_progress_type_text_frame = prv_create_rect_aligned_inside_rect_with_height(
     &text_container_frame, goal_progress_type_font_height, GAlignBottom);
   graphics_draw_text(ctx, goal_type_string, goal_progress_type_font, goal_progress_type_text_frame,
@@ -181,8 +167,8 @@ static const AnimationImplementation s_intro_animation_implementation = {
 };
 
 static HealthValue prv_get_current_progress(void) {
-  const GoalieConfiguration *configuration = goalie_configuration_get_configuration();
-  return health_service_sum_today(configuration->goal_type);
+  const HealthMetric goal_type = goalie_configuration_get_goal_type();
+  return health_service_sum_today(goal_type);
 }
 
 static void prv_health_event_handler(HealthEventType event, void *context) {

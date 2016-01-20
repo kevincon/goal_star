@@ -1,6 +1,15 @@
 #include "goalie_configuration.h"
 
+#include <inttypes.h>
+
 #define GOALIE_CONFIGURATION_CURRENT_VERSION 1
+
+typedef struct {
+  HealthMetric goal_type;
+  HealthValue goal_value;
+} GoalieConfiguration;
+
+_Static_assert(sizeof(GoalieConfiguration) < PERSIST_DATA_MAX_LENGTH, "");
 
 typedef enum {
   GoalieConfigurationPersistedDataKeys_Version,
@@ -17,6 +26,13 @@ static void prv_clear_all_persisted_data(void) {
   }
 }
 
+static void prv_write_configuration(void) {
+  persist_write_int(GoalieConfigurationPersistedDataKeys_Version,
+                    GOALIE_CONFIGURATION_CURRENT_VERSION);
+  persist_write_data(GoalieConfigurationPersistedDataKeys_Data, &s_configuration,
+                     sizeof(s_configuration));
+}
+
 static void prv_set_default_configuration(GoalieConfiguration *configuration) {
   if (!configuration) {
     return;
@@ -26,6 +42,7 @@ static void prv_set_default_configuration(GoalieConfiguration *configuration) {
     .goal_type = HealthMetricStepCount,
     .goal_value = 10000,
   };
+  prv_write_configuration();
 }
 
 //! Returns true if data was migrated successfully and loaded into the static configuration
@@ -48,6 +65,62 @@ static bool prv_migrate_configuration_if_necessary(void) {
   }
 }
 
+HealthMetric goalie_configuration_get_goal_type(void) {
+  return s_configuration.goal_type;
+}
+
+void goalie_configuration_get_goal_type_units_string(
+  char result[GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH], bool all_caps) {
+  if (!result) {
+    return;
+  }
+
+  char *units_string = "???";
+  switch (goalie_configuration_get_goal_type()) {
+    case HealthMetricStepCount:
+      units_string = all_caps ? "STEPS" : "steps";
+      break;
+    case HealthMetricWalkedDistanceMeters:
+      units_string = all_caps ? "METERS" : "meters";
+      break;
+    default:
+      break;
+  }
+
+  snprintf(result, GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH, "%s", units_string);
+}
+
+void goalie_configuration_set_goal_type(HealthMetric new_goal_type) {
+  if (s_configuration.goal_type != new_goal_type) {
+    s_configuration.goal_type = new_goal_type;
+    prv_write_configuration();
+  }
+}
+
+HealthValue goalie_configuration_get_goal_value(void) {
+  return s_configuration.goal_value;
+}
+
+void goalie_configuration_set_goal_value(HealthValue new_goal_value) {
+  if (s_configuration.goal_value != new_goal_value) {
+    s_configuration.goal_value = new_goal_value;
+    prv_write_configuration();
+  }
+}
+
+void goalie_configuration_get_goal_summary_string(
+  char result[GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH]) {
+  if (!result) {
+    return;
+  }
+
+  char units_string[GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH] = {0};
+  goalie_configuration_get_goal_type_units_string(units_string, false /* all_caps */);
+
+  snprintf(result, GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH, "%"PRId32" %s!",
+           goalie_configuration_get_goal_value(), units_string);
+}
+
 void goalie_configuration_init(void) {
   if (prv_migrate_configuration_if_necessary()) {
     // Data was migrated and loaded into the static configuration, so we're good to go
@@ -62,13 +135,6 @@ void goalie_configuration_init(void) {
   }
 }
 
-GoalieConfiguration *goalie_configuration_get_configuration(void) {
-  return &s_configuration;
-}
-
 void goalie_configuration_deinit(void) {
-  persist_write_int(GoalieConfigurationPersistedDataKeys_Version,
-                    GOALIE_CONFIGURATION_CURRENT_VERSION);
-  persist_write_data(GoalieConfigurationPersistedDataKeys_Data, &s_configuration,
-                     sizeof(s_configuration));
+  prv_write_configuration();
 }
