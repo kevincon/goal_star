@@ -90,6 +90,9 @@ static void prv_window_load(Window *window) {
   data->goal_reached_sequence_timer = app_timer_register(ANIMATION_FRAME_INTERVAL_MS,
                                                          prv_goal_reached_sequence_timer_handler,
                                                          data);
+
+  // TODO add vibration type to configuration
+  vibes_long_pulse();
 }
 
 static void prv_window_unload(Window *window) {
