@@ -20,23 +20,23 @@ typedef struct {
   AppTimer *config_hint_timer;
   Animation *intro_animation;
   AnimationProgress intro_animation_progress;
+  HealthValue current_progress;
 } GoalieProgressWindowData;
 
 static int64_t prv_interpolate_int64_linear(int64_t from, int64_t to, AnimationProgress progress) {
   return from + ((progress * (to - from)) / ANIMATION_NORMALIZED_MAX);
 }
 
-static uint32_t prv_get_current_progress_towards_goal(void) {
+static uint32_t prv_get_current_progress_towards_goal(const GoalieProgressWindowData *data) {
   const GoalieConfiguration *configuration = goalie_configuration_get_configuration();
   const HealthValue goal = configuration->goal_value;
-  // TODO
-  return MIN((uint32_t)5280, (uint32_t)goal);
+  return MIN((uint32_t)data->current_progress, (uint32_t)goal);
 }
 
-static void prv_get_animated_progress_towards_goal_as_string(
-  AnimationProgress animation_progress, char *buffer) {
+static void prv_get_animated_progress_towards_goal_as_string(const GoalieProgressWindowData *data,
+                                                             char *buffer) {
   const uint32_t animated_progress = (uint32_t)prv_interpolate_int64_linear(
-    0, prv_get_current_progress_towards_goal(), animation_progress);
+    0, prv_get_current_progress_towards_goal(data), data->intro_animation_progress);
   snprintf(buffer, PROGRESS_GOAL_TEXT_MAX_STRING_LENGTH + 1, "%"PRIu32"", animated_progress);
 }
 
@@ -50,14 +50,7 @@ static void prv_progress_visualization_layer_update_proc(Layer *layer, GContext*
   graphics_fill_radial(ctx, layer_bounds, oval_scale_mode, PROGRESS_VISUALIZATION_RADIAL_THICKNESS,
                        0, TRIG_MAX_ANGLE);
 
-//  const HealthMetric goal_type = HealthMetricStepCount;
-//  const time_t start_of_today = clock_to_timestamp(TODAY, 0, 0);
-//  const time_t seconds_per_day = 60 * 60 * 24;
-//  const time_t end_of_today = start_of_today + seconds_per_day - 1;
-//  const HealthServiceAccessibilityMask goal_type_available =
-//    health_service_metric_accessible(goal_type, start_of_today, end_of_today);
-
-  const uint32_t current_progress = prv_get_current_progress_towards_goal();
+  const uint32_t current_progress = prv_get_current_progress_towards_goal(data);
 
   const uint32_t animated_progress =
     (uint32_t)prv_interpolate_int64_linear(0, current_progress, data->intro_animation_progress);
@@ -134,8 +127,7 @@ static void prv_progress_text_layer_update_proc(Layer *layer, GContext *ctx) {
   // Draw the text for the current progress towards the goal
   char goal_progress_text[PROGRESS_GOAL_TEXT_MAX_STRING_LENGTH + 1] = {0};
 
-  prv_get_animated_progress_towards_goal_as_string(data->intro_animation_progress,
-                                                   goal_progress_text);
+  prv_get_animated_progress_towards_goal_as_string(data, goal_progress_text);
   const GRect goal_progress_text_frame = prv_create_rect_aligned_inside_rect_with_height(
     &text_container_frame, goal_progress_font_height, GAlignTop);
   graphics_draw_text(ctx, goal_progress_text, goal_progress_font, goal_progress_text_frame,
@@ -188,8 +180,25 @@ static const AnimationImplementation s_intro_animation_implementation = {
   .update = prv_intro_animation_update,
 };
 
+static HealthValue prv_get_current_progress(void) {
+  const GoalieConfiguration *configuration = goalie_configuration_get_configuration();
+  return health_service_sum_today(configuration->goal_type);
+}
+
+static void prv_health_event_handler(HealthEventType event, void *context) {
+  GoalieProgressWindowData *data = context;
+  if (!data) {
+    return;
+  }
+  data->current_progress = prv_get_current_progress();
+  layer_mark_dirty(window_get_root_layer(data->window));
+}
+
 static void prv_window_appear(Window *window) {
   GoalieProgressWindowData *data = window_get_user_data(window);
+  data->current_progress = prv_get_current_progress();
+
+  health_service_events_subscribe(prv_health_event_handler, data);
 
   data->intro_animation = animation_create();
   Animation *intro_animation = data->intro_animation;
@@ -249,6 +258,8 @@ static void prv_window_disappear(Window *window) {
   if (data->intro_animation) {
     animation_unschedule(data->intro_animation);
   }
+
+  health_service_events_unsubscribe();
 }
 
 static void prv_window_unload(Window *window) {
