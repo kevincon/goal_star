@@ -2,6 +2,7 @@
 
 #include "../common/goalie_configuration.h"
 #include "goalie_configuration_window.h"
+#include "goalie_goal_event_window.h"
 #include "goalie_prompt_window.h"
 
 #include <pebble.h>
@@ -178,7 +179,12 @@ static void prv_health_event_handler(HealthEventType event, void *context) {
     return;
   }
   if (event == HealthEventMovementUpdate) {
-    data->current_progress = prv_get_current_progress();
+    const HealthValue new_progress = prv_get_current_progress();
+    const HealthValue goal = goalie_configuration_get_goal_value();
+    if (data->current_progress < goal && new_progress >= goal) {
+      goalie_goal_event_window_push();
+    }
+    data->current_progress = new_progress;
     layer_mark_dirty(window_get_root_layer(data->window));
   }
 }
