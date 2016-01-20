@@ -31,6 +31,10 @@ static void prv_write_configuration(void) {
                     GOALIE_CONFIGURATION_CURRENT_VERSION);
   persist_write_data(GoalieConfigurationPersistedDataKeys_Data, &s_configuration,
                      sizeof(s_configuration));
+
+  // Just send an empty message to let the worker know to refresh the configuration
+  AppWorkerMessage data = (AppWorkerMessage) {0};
+  app_worker_send_message(GOALIE_CONFIGURATION_APP_WORKER_MESSAGE_UPDATE_TYPE, &data);
 }
 
 static void prv_set_default_configuration(GoalieConfiguration *configuration) {
