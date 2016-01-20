@@ -197,6 +197,22 @@ static void prv_window_appear(Window *window) {
   animation_schedule(intro_animation);
 }
 
+static void prv_did_focus_handler(bool in_focus) {
+  if (in_focus && !app_worker_is_running()) {
+    // HACK: Sleep a bit in case the worker still hasn't launched
+    const int last_chance_ms = 100;
+    psleep(last_chance_ms);
+    if (!app_worker_is_running()) {
+      window_stack_pop(true /* animated */);
+      goalie_prompt_window_push();
+    } else {
+      Window *window = window_stack_get_top_window();
+      GoalieProgressWindowData *data = window_get_user_data(window);
+      layer_mark_dirty(window_get_root_layer(data->window));
+    }
+  }
+}
+
 static void prv_window_load(Window *window) {
   GoalieProgressWindowData *data = window_get_user_data(window);
   if (!data) {
@@ -241,11 +257,9 @@ static void prv_window_load(Window *window) {
   data->config_hint_timer = app_timer_register(config_hint_timer_timeout_ms,
                                                prv_config_hint_timer_handler, data);
 
-  if (!app_worker_is_running()) {
-    const bool animated = false;
-    window_stack_pop(animated);
-    goalie_prompt_window_push();
-  }
+  app_focus_service_subscribe_handlers((AppFocusHandlers) {
+    .did_focus = prv_did_focus_handler,
+  });
 }
 
 static void prv_window_disappear(Window *window) {
@@ -270,6 +284,8 @@ static void prv_window_unload(Window *window) {
     layer_destroy(data->progress_visualization_layer);
     window_destroy(data->window);
   }
+
+  app_focus_service_unsubscribe();
 
   free(data);
 }

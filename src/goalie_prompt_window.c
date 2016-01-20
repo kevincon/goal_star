@@ -25,20 +25,21 @@ static void prv_text_layer_update_proc(Layer *layer, GContext* ctx) {
 }
 
 static void prv_select_click_handler(ClickRecognizerRef recognizer, void *context) {
+  GoaliePromptWindowData *data = context;
   const AppWorkerResult result = app_worker_launch();
   const bool animated = false;
   switch (result) {
     case APP_WORKER_RESULT_ALREADY_RUNNING:
     case APP_WORKER_RESULT_ASKING_CONFIRMATION:
     case APP_WORKER_RESULT_SUCCESS:
-      window_stack_pop(animated);
       goalie_progress_window_push();
+      window_stack_remove(data->window, animated);
       break;
     case APP_WORKER_RESULT_DIFFERENT_APP:
     case APP_WORKER_RESULT_NO_WORKER:
     case APP_WORKER_RESULT_NOT_RUNNING:
-      window_stack_pop(animated);
       goalie_prompt_window_push();
+      window_stack_remove(data->window, animated);
       break;
     default:
       window_stack_pop(animated);
@@ -48,6 +49,7 @@ static void prv_select_click_handler(ClickRecognizerRef recognizer, void *contex
 
 static void prv_click_config_provider(void *context) {
   window_single_click_subscribe(BUTTON_ID_SELECT, prv_select_click_handler);
+  window_set_click_context(BUTTON_ID_SELECT, context);
 }
 
 static void prv_window_load(Window *window) {
@@ -74,6 +76,7 @@ static void prv_window_load(Window *window) {
   data->action_bar_layer = action_bar_layer_create();
   ActionBarLayer *action_bar_layer = data->action_bar_layer;
   action_bar_layer_set_click_config_provider(action_bar_layer, prv_click_config_provider);
+  action_bar_layer_set_context(action_bar_layer, data);
   action_bar_layer_set_icon(action_bar_layer, BUTTON_ID_SELECT, data->checkmark_icon);
   action_bar_layer_add_to_window(action_bar_layer, window);
 }
