@@ -18,6 +18,11 @@
       "type": "bitmap",
       "name": "CHECKMARK",
       "file": "images/white_checkmark.png"
+      },
+      {
+        "type": "raw",
+        "name": "GOAL_REACHED",
+        "file": "images/goal_reached.pdc"
       }
     ]
   }

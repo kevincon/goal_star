@@ -249,7 +249,8 @@ static void prv_window_load(Window *window) {
   layer_add_child(window_root_layer, config_hint_text_layer);
 
   const uint32_t config_hint_timer_timeout_ms = 4000;
-  app_timer_register(config_hint_timer_timeout_ms, prv_config_hint_timer_handler, data);
+  data->config_hint_timer = app_timer_register(config_hint_timer_timeout_ms,
+                                               prv_config_hint_timer_handler, data);
 }
 
 static void prv_window_disappear(Window *window) {

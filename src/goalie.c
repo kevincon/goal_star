@@ -1,4 +1,5 @@
 #include "goalie_configuration.h"
+#include "goalie_goal_event_window.h"
 #include "goalie_progress_window.h"
 #include "goalie_prompt_window.h"
 
@@ -7,7 +8,8 @@
 static void prv_init(void) {
   goalie_configuration_init();
 //  goalie_progress_window_push();
-  goalie_prompt_window_push();
+//  goalie_prompt_window_push();
+  goalie_goal_event_window_push();
 }
 
 static void prv_deinit(void) {
