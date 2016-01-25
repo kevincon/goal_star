@@ -27,7 +27,7 @@ static void prv_menu_layer_draw_row_callback(GContext *ctx, const Layer *cell_la
 
   const GRect cell_layer_bounds = layer_get_bounds(cell_layer);
 
-  const int16_t radio_button_horizontal_padding = 10;
+  const int16_t radio_button_horizontal_padding = PBL_IF_RECT_ELSE(6, 10);
   const int16_t radio_button_radius = 7;
 
   int16_t right_inset = (radio_button_horizontal_padding + radio_button_radius) * 2;
