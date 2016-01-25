@@ -8,6 +8,7 @@ typedef struct {
   HealthMetric goal_type;
   HealthValue goal_value;
   uint32_t goal_event_timeout_ms;
+  bool clock_time_enabled;
 } GoalieConfiguration;
 
 _Static_assert(sizeof(GoalieConfiguration) < PERSIST_DATA_MAX_LENGTH, "");
@@ -47,6 +48,7 @@ static void prv_set_default_configuration(GoalieConfiguration *configuration) {
     .goal_type = HealthMetricStepCount,
     .goal_value = 10000,
     .goal_event_timeout_ms = 0,
+    .clock_time_enabled = true,
   };
   prv_write_configuration();
 }
@@ -134,6 +136,17 @@ uint32_t goalie_configuration_get_goal_event_timeout_ms(void) {
 void goalie_configuration_set_goal_event_timeout_ms(uint32_t new_goal_event_timeout_ms) {
   if (s_configuration.goal_event_timeout_ms != new_goal_event_timeout_ms) {
     s_configuration.goal_event_timeout_ms = new_goal_event_timeout_ms;
+    prv_write_configuration();
+  }
+}
+
+bool goalie_configuration_get_clock_time_enabled(void) {
+  return s_configuration.clock_time_enabled;
+}
+
+void goalie_configuration_set_clock_time_enabled(bool enabled) {
+  if (s_configuration.clock_time_enabled != enabled) {
+    s_configuration.clock_time_enabled = enabled;
     prv_write_configuration();
   }
 }

@@ -16,6 +16,7 @@
 
 typedef struct {
   Window *window;
+  StatusBarLayer *status_bar_layer;
   Layer *progress_visualization_layer;
   Layer *progress_text_layer;
   Layer *config_hint_text_layer;
@@ -29,7 +30,7 @@ static int64_t prv_interpolate_int64_linear(int64_t from, int64_t to, AnimationP
   return from + ((progress * (to - from)) / ANIMATION_NORMALIZED_MAX);
 }
 
-static uint32_t prv_get_current_progress_towards_goal(const GoalieProgressWindowData *data) {
+static HealthValue prv_get_current_progress_towards_goal(const GoalieProgressWindowData *data) {
   const HealthValue goal = goalie_configuration_get_goal_value();
   return MIN((uint32_t)data->current_progress, (uint32_t)goal);
 }
@@ -37,7 +38,7 @@ static uint32_t prv_get_current_progress_towards_goal(const GoalieProgressWindow
 static void prv_get_animated_progress_towards_goal_as_string(const GoalieProgressWindowData *data,
                                                              char *buffer) {
   const uint32_t animated_progress = (uint32_t)prv_interpolate_int64_linear(
-    0, prv_get_current_progress_towards_goal(data), data->intro_animation_progress);
+    0, data->current_progress, data->intro_animation_progress);
   snprintf(buffer, PROGRESS_GOAL_TEXT_MAX_STRING_LENGTH + 1, "%"PRIu32"", animated_progress);
 }
 
@@ -201,6 +202,9 @@ static void prv_window_appear(Window *window) {
   animation_set_duration(intro_animation, 1000);
   animation_set_curve(intro_animation, AnimationCurveEaseInOut);
   animation_schedule(intro_animation);
+
+  layer_set_hidden(status_bar_layer_get_layer(data->status_bar_layer),
+                   !goalie_configuration_get_clock_time_enabled());
 }
 
 static void prv_did_focus_handler(bool in_focus) {
@@ -227,6 +231,19 @@ static void prv_window_load(Window *window) {
 
   Layer *window_root_layer = window_get_root_layer(window);
   const GRect window_root_layer_bounds = layer_get_bounds(window_root_layer);
+
+  data->status_bar_layer = status_bar_layer_create();
+  StatusBarLayer *status_bar_layer = data->status_bar_layer;
+  status_bar_layer_set_colors(status_bar_layer, GColorClear, GColorBlack);
+  Layer *status_bar_underlying_layer = status_bar_layer_get_layer(status_bar_layer);
+#if PBL_ROUND
+  // Move the status bar layer below the top of the ring on round displays
+  GRect status_bar_layer_frame = layer_get_frame(status_bar_underlying_layer);
+  const int16_t text_cap_offset = 5;
+  status_bar_layer_frame.origin.y += PROGRESS_VISUALIZATION_RADIAL_THICKNESS - text_cap_offset;
+  layer_set_frame(status_bar_underlying_layer, status_bar_layer_frame);
+#endif
+  layer_add_child(window_root_layer, status_bar_underlying_layer);
 
   GRect progress_visualization_layer_frame = window_root_layer_bounds;
 #if PBL_RECT
@@ -288,6 +305,7 @@ static void prv_window_unload(Window *window) {
     layer_destroy(data->config_hint_text_layer);
     layer_destroy(data->progress_text_layer);
     layer_destroy(data->progress_visualization_layer);
+    status_bar_layer_destroy(data->status_bar_layer);
     window_destroy(data->window);
   }
 

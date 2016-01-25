@@ -156,6 +156,38 @@ static int16_t prv_goal_event_timeout_ms_get_index_of_current_choice(void) {
   return -1;
 }
 
+// Boolean
+////////////
+
+#define ON_INDEX 0
+#define OFF_INDEX 1
+
+static uint16_t prv_bool_get_num_choices(void) {
+  return 2;
+}
+
+static void prv_bool_get_string_for_index(
+  uint16_t index, char result[GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH]) {
+  if (!result) {
+    return;
+  }
+
+  strncpy(result, (index == ON_INDEX) ? "Enabled" : "Disabled",
+          GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH);
+}
+
+// Show clock time
+///////////////////
+
+static void prv_clock_time_enabled_choice_made(uint16_t choice_index) {
+  goalie_configuration_set_clock_time_enabled((choice_index == ON_INDEX));
+}
+
+static int16_t prv_clock_time_enabled_get_index_of_current_choice(void) {
+  const bool current_choice = goalie_configuration_get_clock_time_enabled();
+  return (int16_t)(current_choice ? ON_INDEX : OFF_INDEX);
+}
+
 // Common
 //////////
 
@@ -191,6 +223,18 @@ static const GoalieConfigurationMenuDataSourceOption s_options[] = {
         .get_string_for_index = prv_goal_event_timeout_ms_get_string_for_index,
         .get_num_choices = prv_goal_event_timeout_ms_get_num_choices,
         .choice_made = prv_goal_event_timeout_ms_choice_made,
+      },
+    },
+  },
+  {
+    .title = "Show time",
+    .type = GoalieConfigurationMenuDataSourceOptionType_MultipleChoice,
+    .choice_callbacks = {
+      .get_index_of_current_choice = prv_clock_time_enabled_get_index_of_current_choice,
+      .callbacks = {
+        .get_string_for_index = prv_bool_get_string_for_index,
+        .get_num_choices = prv_bool_get_num_choices,
+        .choice_made = prv_clock_time_enabled_choice_made,
       },
     },
   },

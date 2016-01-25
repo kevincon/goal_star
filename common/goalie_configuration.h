@@ -22,6 +22,8 @@ void goalie_configuration_get_goal_type_units_string(
 void goalie_configuration_set_goal_type(HealthMetric new_goal_type);
 void goalie_configuration_set_goal_value(HealthValue new_goal_value);
 void goalie_configuration_set_goal_event_timeout_ms(uint32_t new_goal_event_timeout_ms);
+bool goalie_configuration_get_clock_time_enabled(void);
+void goalie_configuration_set_clock_time_enabled(bool enabled);
 void goalie_configuration_get_goal_summary_string(
   char result[GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH]);
 #endif
