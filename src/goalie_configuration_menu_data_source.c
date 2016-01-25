@@ -47,7 +47,7 @@ static int16_t prv_goal_type_get_index_of_current_choice(void) {
   for (unsigned int choice_index = 0; choice_index < ARRAY_LENGTH(s_goal_type_options);
        choice_index++) {
     if (s_goal_type_options[choice_index].choice_value == current_goal_type) {
-      return choice_index;
+      return (int16_t)choice_index;
     }
   }
   return -1;
@@ -75,6 +75,87 @@ static int32_t prv_goal_value_get_current_value(void) {
   return goalie_configuration_get_goal_value();
 }
 
+// Goal Event Window Timeout
+//////////////////////////////
+
+typedef uint32_t GoalEventTimeoutMsValue;
+
+MAKE_CHOICE_STRUCT(GoalEventTimeoutMsValue)
+
+static const GoalEventTimeoutMsValueChoice s_goal_event_timeout_ms_options[] = {
+  {
+    .choice_name = "Stay on screen",
+    .choice_value = 0,
+  },
+  {
+    .choice_name = "1 second",
+    .choice_value = 1000,
+  },
+  {
+    .choice_name = "3 seconds",
+    .choice_value = 3000,
+  },
+  {
+    .choice_name = "5 seconds",
+    .choice_value = 5000,
+  },
+  {
+    .choice_name = "10 seconds",
+    .choice_value = 10000,
+  },
+  {
+    .choice_name = "30 seconds",
+    .choice_value = 30000,
+  },
+  {
+    .choice_name = "1 minute",
+    .choice_value = 60000,
+  },
+  {
+    .choice_name = "3 minutes",
+    .choice_value = 180000,
+  },
+  {
+    .choice_name = "5 minutes",
+    .choice_value = 300000,
+  },
+  {
+    .choice_name = "10 minutes",
+    .choice_value = 600000,
+  }
+};
+
+static uint16_t prv_goal_event_timeout_ms_get_num_choices(void) {
+  return ARRAY_LENGTH(s_goal_event_timeout_ms_options);
+}
+
+static void prv_goal_event_timeout_ms_get_string_for_index(
+  uint16_t index, char result[GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH]) {
+  if (!result) {
+    return;
+  }
+
+  strncpy(result, s_goal_event_timeout_ms_options[index].choice_name,
+          GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH);
+}
+
+static void prv_goal_event_timeout_ms_choice_made(uint16_t choice_index) {
+  goalie_configuration_set_goal_event_timeout_ms(
+    s_goal_event_timeout_ms_options[choice_index].choice_value);
+}
+
+static int16_t prv_goal_event_timeout_ms_get_index_of_current_choice(void) {
+  const uint32_t current_goal_event_timeout_ms = goalie_configuration_get_goal_event_timeout_ms();
+  for (unsigned int choice_index = 0; choice_index < ARRAY_LENGTH(s_goal_event_timeout_ms_options);
+       choice_index++) {
+    if (s_goal_event_timeout_ms_options[choice_index].choice_value ==
+        current_goal_event_timeout_ms) {
+      return (int16_t)choice_index;
+    }
+  }
+  return -1;
+}
+
 // Common
 //////////
 
@@ -100,7 +181,19 @@ static const GoalieConfigurationMenuDataSourceOption s_options[] = {
       .number_selected = prv_goal_value_number_selected,
       .get_current_value = prv_goal_value_get_current_value,
     }
-  }
+  },
+  {
+    .title = "Popup timeout",
+    .type = GoalieConfigurationMenuDataSourceOptionType_MultipleChoice,
+    .choice_callbacks = {
+      .get_index_of_current_choice = prv_goal_event_timeout_ms_get_index_of_current_choice,
+      .callbacks = {
+        .get_string_for_index = prv_goal_event_timeout_ms_get_string_for_index,
+        .get_num_choices = prv_goal_event_timeout_ms_get_num_choices,
+        .choice_made = prv_goal_event_timeout_ms_choice_made,
+      },
+    },
+  },
 };
 
 const GoalieConfigurationMenuDataSourceOption *goalie_configuration_menu_data_source_get_option_at_index(
@@ -124,7 +217,7 @@ void goalie_configuration_menu_data_source_get_current_choice_string_for_option_
       if (current_choice_index != -1) {
         char current_choice_string[GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH] =
           {0};
-        option->choice_callbacks.callbacks.get_string_for_index(current_choice_index,
+        option->choice_callbacks.callbacks.get_string_for_index((uint16_t)current_choice_index,
                                                                 current_choice_string);
         strncpy(result, current_choice_string,
                 GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH);

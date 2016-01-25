@@ -7,6 +7,7 @@
 typedef struct {
   HealthMetric goal_type;
   HealthValue goal_value;
+  uint32_t goal_event_timeout_ms;
 } GoalieConfiguration;
 
 _Static_assert(sizeof(GoalieConfiguration) < PERSIST_DATA_MAX_LENGTH, "");
@@ -45,6 +46,7 @@ static void prv_set_default_configuration(GoalieConfiguration *configuration) {
   *configuration = (GoalieConfiguration) {
     .goal_type = HealthMetricStepCount,
     .goal_value = 10000,
+    .goal_event_timeout_ms = 0,
   };
   prv_write_configuration();
 }
@@ -123,6 +125,17 @@ void goalie_configuration_get_goal_summary_string(
 
   snprintf(result, GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH, "%"PRId32" %s!",
            goalie_configuration_get_goal_value(), units_string);
+}
+
+uint32_t goalie_configuration_get_goal_event_timeout_ms(void) {
+  return s_configuration.goal_event_timeout_ms;
+}
+
+void goalie_configuration_set_goal_event_timeout_ms(uint32_t new_goal_event_timeout_ms) {
+  if (s_configuration.goal_event_timeout_ms != new_goal_event_timeout_ms) {
+    s_configuration.goal_event_timeout_ms = new_goal_event_timeout_ms;
+    prv_write_configuration();
+  }
 }
 
 void goalie_configuration_init(void) {

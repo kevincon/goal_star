@@ -13,6 +13,7 @@ void goalie_configuration_init(void);
 
 HealthMetric goalie_configuration_get_goal_type(void);
 HealthValue goalie_configuration_get_goal_value(void);
+uint32_t goalie_configuration_get_goal_event_timeout_ms(void);
 
 #if !GOALIE_WORKER
 void goalie_configuration_deinit(void);
@@ -20,6 +21,7 @@ void goalie_configuration_get_goal_type_units_string(
   char result[GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH], bool all_caps);
 void goalie_configuration_set_goal_type(HealthMetric new_goal_type);
 void goalie_configuration_set_goal_value(HealthValue new_goal_value);
+void goalie_configuration_set_goal_event_timeout_ms(uint32_t new_goal_event_timeout_ms);
 void goalie_configuration_get_goal_summary_string(
   char result[GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH]);
 #endif

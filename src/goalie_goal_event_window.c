@@ -44,9 +44,12 @@ static void prv_goal_reached_sequence_layer_update_proc(Layer *layer, GContext *
   const uint32_t num_frames = gdraw_command_sequence_get_num_frames(data->goal_reached_sequence);
   if (++data->goal_reached_sequence_frame_index >= num_frames) {
     app_timer_cancel(data->goal_reached_sequence_timer);
-    data->goal_reached_sequence_timer = app_timer_register(WAIT_BEFORE_POP_MS,
-                                                           prv_goal_reached_wait_timer_handler,
-                                                           data);
+    const uint32_t timeout_ms = goalie_configuration_get_goal_event_timeout_ms();
+    if (timeout_ms) {
+      data->goal_reached_sequence_timer = app_timer_register(timeout_ms,
+                                                             prv_goal_reached_wait_timer_handler,
+                                                             data);
+    }
   }
 
   char text[GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH] = {0};
