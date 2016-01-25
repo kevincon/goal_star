@@ -70,6 +70,36 @@ static void prv_goal_reached_sequence_timer_handler(void *context) {
   }
 }
 
+static void prv_vibrate(void) {
+  const int32_t short_pulse_duration_ms = 100;
+  const uint32_t vibe_segments[] = {
+    // 4 short pulses
+    short_pulse_duration_ms,
+    short_pulse_duration_ms * 2,
+    short_pulse_duration_ms,
+    short_pulse_duration_ms * 2,
+    short_pulse_duration_ms,
+    short_pulse_duration_ms * 2,
+    short_pulse_duration_ms,
+    short_pulse_duration_ms * 2,
+    // 1 long pulse
+    short_pulse_duration_ms * 4,
+    short_pulse_duration_ms * 2,
+    // 3 short pulses
+    short_pulse_duration_ms,
+    short_pulse_duration_ms * 2,
+    short_pulse_duration_ms,
+    short_pulse_duration_ms * 2,
+    short_pulse_duration_ms,
+    short_pulse_duration_ms * 2,
+  };
+  VibePattern vibe_pattern = {
+    .durations = vibe_segments,
+    .num_segments = ARRAY_LENGTH(vibe_segments),
+  };
+  vibes_enqueue_custom_pattern(vibe_pattern);
+}
+
 static void prv_window_load(Window *window) {
   GoalieGoalEventWindowData *data = window_get_user_data(window);
   if (!data) {
@@ -91,8 +121,7 @@ static void prv_window_load(Window *window) {
                                                          prv_goal_reached_sequence_timer_handler,
                                                          data);
 
-  // TODO add vibration type to configuration
-  vibes_long_pulse();
+  prv_vibrate();
 }
 
 static void prv_window_unload(Window *window) {
