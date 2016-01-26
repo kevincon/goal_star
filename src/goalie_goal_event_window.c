@@ -125,6 +125,7 @@ static void prv_window_load(Window *window) {
                                                          data);
 
   prv_vibrate();
+  light_enable_interaction();
 }
 
 static void prv_window_unload(Window *window) {
