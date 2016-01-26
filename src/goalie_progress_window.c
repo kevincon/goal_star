@@ -24,10 +24,13 @@ typedef struct {
   Layer *config_hint_text_layer;
   AppTimer *config_hint_timer;
   Animation *intro_animation;
-  AnimationProgress intro_text_animation_progress;
-  AnimationProgress intro_ring_fill_animation_progress;
-  AnimationProgress intro_ring_pulse_animation_progress;
-  bool vibrated_during_intro_ring_pulse_animation;
+  struct {
+    AnimationProgress intro_text_animation_progress;
+    AnimationProgress intro_text_post_pulse_animation_progress;
+    AnimationProgress intro_ring_fill_animation_progress;
+    AnimationProgress intro_ring_pulse_animation_progress;
+    bool vibrated_during_intro_ring_pulse_animation;
+  } intro_animation_state;
   HealthValue current_progress;
 } GoalieProgressWindowData;
 
@@ -48,8 +51,20 @@ static HealthValue prv_get_current_progress_towards_goal(const GoalieProgressWin
 
 static void prv_get_animated_progress_towards_goal_as_string(const GoalieProgressWindowData *data,
                                                              char *buffer) {
-  const uint32_t animated_progress = (uint32_t)prv_interpolate_int64_linear(
-    0, data->current_progress, data->intro_text_animation_progress);
+  const HealthValue goal = goalie_configuration_get_goal_value();
+
+  uint32_t animated_progress = 0;
+  if (data->intro_animation_state.intro_text_post_pulse_animation_progress) {
+    const HealthValue post_pulse_target_value = MAX(data->current_progress, goal);
+    animated_progress = (uint32_t)prv_interpolate_int64_linear(
+      goal, post_pulse_target_value,
+      data->intro_animation_state.intro_text_post_pulse_animation_progress);
+  } else {
+    const HealthValue pre_pulse_target_value = MIN(data->current_progress, goal);
+    animated_progress = (uint32_t)prv_interpolate_int64_linear(
+      0, pre_pulse_target_value, data->intro_animation_state.intro_text_animation_progress);
+  }
+
   snprintf(buffer, PROGRESS_GOAL_TEXT_MAX_STRING_LENGTH + 1, "%"PRIu32"", animated_progress);
 }
 
@@ -60,8 +75,9 @@ static void prv_progress_visualization_layer_update_proc(Layer *layer, GContext*
   GRect radial_frame = layer_bounds;
   const GOvalScaleMode oval_scale_mode = GOvalScaleModeFitCircle;
 
-  const bool ring_pulse_animation_in_progress = WITHIN(data->intro_ring_pulse_animation_progress, 0,
-                                                       ANIMATION_NORMALIZED_MAX);
+  const bool ring_pulse_animation_in_progress =
+    WITHIN(data->intro_animation_state.intro_ring_pulse_animation_progress, 0,
+           ANIMATION_NORMALIZED_MAX);
   if (!ring_pulse_animation_in_progress) {
     graphics_context_set_fill_color(ctx, GColorLightGray);
     graphics_fill_radial(ctx, layer_bounds, oval_scale_mode,
@@ -71,8 +87,8 @@ static void prv_progress_visualization_layer_update_proc(Layer *layer, GContext*
   const HealthValue current_progress = prv_get_current_progress_towards_goal(data);
 
   const uint32_t animated_progress =
-    (uint32_t)prv_interpolate_int64_linear(0, current_progress,
-                                           data->intro_ring_fill_animation_progress);
+    (uint32_t)prv_interpolate_int64_linear(
+      0, current_progress, data->intro_animation_state.intro_ring_fill_animation_progress);
 
   const HealthValue goal = goalie_configuration_get_goal_value();
 
@@ -86,11 +102,14 @@ static void prv_progress_visualization_layer_update_proc(Layer *layer, GContext*
     const uint16_t pulsed_progress_radial_inset_offset =
       PROGRESS_VISUALIZATION_RADIAL_THICKNESS * 2;
     AnimationProgress ring_pulse_progress =
-      (data->intro_ring_pulse_animation_progress < (ANIMATION_NORMALIZED_MAX / 2)) ?
-      prv_rescale_animation_progress(data->intro_ring_pulse_animation_progress, 0,
-                                     ANIMATION_NORMALIZED_MAX) :
-      prv_rescale_animation_progress(data->intro_ring_pulse_animation_progress,
-                                     ANIMATION_NORMALIZED_MAX, 0);
+      (data->intro_animation_state.intro_ring_pulse_animation_progress <
+        (ANIMATION_NORMALIZED_MAX / 2)) ?
+      prv_rescale_animation_progress(
+        data->intro_animation_state.intro_ring_pulse_animation_progress, 0,
+        ANIMATION_NORMALIZED_MAX) :
+      prv_rescale_animation_progress(
+        data->intro_animation_state.intro_ring_pulse_animation_progress,
+        ANIMATION_NORMALIZED_MAX, 0);
 
     const uint16_t progress_radial_inset = (uint16_t)prv_interpolate_int64_linear(
       0, -pulsed_progress_radial_inset_offset, ring_pulse_progress);
@@ -199,7 +218,7 @@ static void prv_intro_text_animation_update(Animation *animation,
   const Window *top_window = window_stack_get_top_window();
   GoalieProgressWindowData *data = window_get_user_data(top_window);
   if (data) {
-    data->intro_text_animation_progress = progress;
+    data->intro_animation_state.intro_text_animation_progress = progress;
     layer_mark_dirty(data->progress_text_layer);
   }
 }
@@ -213,7 +232,7 @@ static void prv_intro_ring_fill_animation_update(Animation *animation,
   const Window *top_window = window_stack_get_top_window();
   GoalieProgressWindowData *data = window_get_user_data(top_window);
   if (data) {
-    data->intro_ring_fill_animation_progress = progress;
+    data->intro_animation_state.intro_ring_fill_animation_progress = progress;
     layer_mark_dirty(data->progress_visualization_layer);
   }
 }
@@ -227,18 +246,32 @@ static void prv_intro_ring_pulse_animation_update(Animation *animation,
   const Window *top_window = window_stack_get_top_window();
   GoalieProgressWindowData *data = window_get_user_data(top_window);
   if (data) {
-    data->intro_ring_pulse_animation_progress = progress;
+    data->intro_animation_state.intro_ring_pulse_animation_progress = progress;
     layer_mark_dirty(data->progress_visualization_layer);
 
-    if (!data->vibrated_during_intro_ring_pulse_animation) {
+    if (!data->intro_animation_state.vibrated_during_intro_ring_pulse_animation) {
       vibes_long_pulse();
-      data->vibrated_during_intro_ring_pulse_animation = true;
+      data->intro_animation_state.vibrated_during_intro_ring_pulse_animation = true;
     }
   }
 }
 
 static const AnimationImplementation s_intro_ring_pulse_animation_implementation = {
   .update = prv_intro_ring_pulse_animation_update,
+};
+
+static void prv_intro_text_post_pulse_animation_update(Animation *animation,
+                                                       const AnimationProgress progress) {
+  const Window *top_window = window_stack_get_top_window();
+  GoalieProgressWindowData *data = window_get_user_data(top_window);
+  if (data) {
+    data->intro_animation_state.intro_text_post_pulse_animation_progress = progress;
+    layer_mark_dirty(data->progress_text_layer);
+  }
+}
+
+static const AnimationImplementation s_intro_text_post_pulse_animation_implementation = {
+  .update = prv_intro_text_post_pulse_animation_update,
 };
 
 static HealthValue prv_get_current_progress(void) {
@@ -262,13 +295,8 @@ static void prv_health_event_handler(HealthEventType event, void *context) {
   }
 }
 
-static void prv_window_appear(Window *window) {
-  GoalieProgressWindowData *data = window_get_user_data(window);
-  const HealthValue current_progress = prv_get_current_progress();
-  data->current_progress = current_progress;
+static Animation *prv_create_intro_animation(HealthValue current_progress) {
   const HealthValue goal = goalie_configuration_get_goal_value();
-
-  health_service_events_subscribe(prv_health_event_handler, data);
 
   const uint32_t intro_ring_animation_duration_ms = 1000;
 
@@ -280,7 +308,9 @@ static void prv_window_appear(Window *window) {
   animation_set_curve(intro_ring_fill_animation, AnimationCurveEaseInOut);
 
   Animation *intro_ring_animation = intro_ring_fill_animation;
-  if (current_progress >= goal) {
+
+  const bool past_goal = (current_progress >= goal);
+  if (past_goal) {
     // If we've reached the goal, pulse the ring after it completes
     Animation *intro_ring_pulse_animation = animation_create();
     animation_set_implementation(intro_ring_pulse_animation,
@@ -292,23 +322,53 @@ static void prv_window_appear(Window *window) {
   }
 
   // Create the animation that increments the progress text to the current progress value
+  // (or the goal, if it's been reached)
   Animation *intro_text_animation = animation_create();
   animation_set_implementation(intro_text_animation, &s_intro_text_animation_implementation);
-  const HealthValue target_progress = MAX(current_progress, goal);
-  // Scale the text animation so it lasts longer than the ring animation, but no more than thrice it
-  const uint32_t intro_text_animation_duration_ms =
-    MIN(intro_ring_animation_duration_ms * 3,
-        target_progress * intro_ring_animation_duration_ms / goal);
-  animation_set_duration(intro_text_animation, intro_text_animation_duration_ms);
+  animation_set_duration(intro_text_animation, intro_ring_animation_duration_ms);
   animation_set_curve(intro_text_animation, AnimationCurveEaseInOut);
 
-  data->intro_animation = animation_spawn_create(intro_text_animation, intro_ring_animation, NULL);
+  // If we haven't reached the goal, the result is just the text and the ring animating in parallel
+  // (if we have reached the goal, intro_ring_animation also includes a pulse animation in sequence)
+  Animation *result = animation_spawn_create(intro_text_animation, intro_ring_animation, NULL);
+
+  if (past_goal) {
+    // If we've past the goal, further animate the text to the current progress past the goal
+    Animation *intro_text_post_pulse_animation = animation_create();
+    animation_set_implementation(intro_text_post_pulse_animation,
+                                 &s_intro_text_post_pulse_animation_implementation);
+    animation_set_duration(intro_text_post_pulse_animation, 500);
+    animation_set_curve(intro_text_post_pulse_animation, AnimationCurveLinear);
+    result = animation_sequence_create(result, intro_text_post_pulse_animation, NULL);
+  }
+
+  return result;
+}
+
+static void prv_window_appear(Window *window) {
+  GoalieProgressWindowData *data = window_get_user_data(window);
+
+  const HealthValue current_progress = prv_get_current_progress();
+
+  // Set the current progress in the data struct; we'll use this to update the UI instead of
+  // calling prv_get_current_progress() each time the UI is redrawn
+  data->current_progress = current_progress;
+
+  // Subscribe to health events; this is where we'll actually update data->current_progress as
+  // health events happen
+  health_service_events_subscribe(prv_health_event_handler, data);
+
+
+  // Schedule the intro animation
+  data->intro_animation = prv_create_intro_animation(current_progress);
   animation_schedule(data->intro_animation);
 
+  // Show/hide the clock time as needed
   layer_set_hidden(status_bar_layer_get_layer(data->status_bar_layer),
                    !goalie_configuration_get_clock_time_enabled());
 
-  data->vibrated_during_intro_ring_pulse_animation = false;
+  // Reset the state needed for the intro animation
+  memset(&data->intro_animation_state, 0, sizeof(data->intro_animation_state));
 }
 
 static void prv_did_focus_handler(bool in_focus) {
