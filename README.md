@@ -1,6 +1,6 @@
 # Goalie
 
-A simple Pebble Time app that lets you set a daily health goal and get notified with vibrations and 
+A simple Pebble app that lets you set a daily health goal and get notified with vibrations and
 a popup when you reach it.
 
 Goalie runs in the background so you can get notified even if you're not in the app.
@@ -18,7 +18,8 @@ The app includes configuration options for:
     * Steps
     * Distance (meters)
 * Goal value
-* Popup timeout
+* Popup window timeout
+* Show time on progress window
 
 ## Building on Mac OSX
 
@@ -48,7 +49,7 @@ And install it into the emulator of the platform of your choice (chalk shown bel
 pebble install --emulator chalk
 ```
 
-Or install it on your watch after enabling the Developer Connection in your Pebble Time 
+Or install it on your watch after enabling the Developer Connection in your Pebble Time
 iPhone/Android app with:
 
 ```
