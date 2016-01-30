@@ -194,7 +194,7 @@ static int16_t prv_clock_time_enabled_get_index_of_current_choice(void) {
 
 static const GoalieConfigurationMenuDataSourceOption s_options[] = {
   {
-    .title = "Goal type",
+    .title = "Goal Type",
     .type = GoalieConfigurationMenuDataSourceOptionType_MultipleChoice,
     .choice_callbacks = {
       .get_index_of_current_choice = prv_goal_type_get_index_of_current_choice,
@@ -206,7 +206,7 @@ static const GoalieConfigurationMenuDataSourceOption s_options[] = {
     },
   },
   {
-    .title = "Goal value",
+    .title = "Goal Value",
     .type = GoalieConfigurationMenuDataSourceOptionType_Number,
     .number_callbacks = {
       .get_lower_bound = prv_goal_value_get_lower_bound,
@@ -216,7 +216,7 @@ static const GoalieConfigurationMenuDataSourceOption s_options[] = {
     }
   },
   {
-    .title = "Popup timeout",
+    .title = "Popup Timeout",
     .type = GoalieConfigurationMenuDataSourceOptionType_MultipleChoice,
     .choice_callbacks = {
       .get_index_of_current_choice = prv_goal_event_timeout_ms_get_index_of_current_choice,
@@ -228,7 +228,7 @@ static const GoalieConfigurationMenuDataSourceOption s_options[] = {
     },
   },
   {
-    .title = "Show time",
+    .title = "Show Time",
     .type = GoalieConfigurationMenuDataSourceOptionType_MultipleChoice,
     .choice_callbacks = {
       .get_index_of_current_choice = prv_clock_time_enabled_get_index_of_current_choice,
