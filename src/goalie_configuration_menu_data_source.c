@@ -64,8 +64,9 @@ static int32_t prv_goal_value_get_upper_bound(void) {
   return 100000;
 }
 
-static void prv_goal_value_number_selected(NumberWindow *number_window, void *context) {
-  goalie_configuration_set_goal_value(number_window_get_value(number_window));
+static void prv_goal_value_number_selected(GoalieNumberWindow *number_window, void *context) {
+  // TODO replace with SDK NumberWindow once it gets updated to support larger numbers
+  goalie_configuration_set_goal_value(goalie_number_window_get_value(number_window));
 
   const bool animated = true;
   window_stack_pop(animated);

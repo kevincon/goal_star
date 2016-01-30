@@ -6,6 +6,10 @@
 #include <pebble.h>
 #endif
 
+#define WITHIN(x, a, b) (((x) >= (a)) && ((x) <= (b)))
+#define MIN(A,B)    ({ __typeof__(A) __a = (A); __typeof__(B) __b = (B); __a < __b ? __a : __b; })
+#define MAX(A,B)    ({ __typeof__(A) __a = (A); __typeof__(B) __b = (B); __a < __b ? __b : __a; })
+
 #define GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH 30
 #define GOALIE_CONFIGURATION_APP_WORKER_MESSAGE_UPDATE_TYPE 0
 

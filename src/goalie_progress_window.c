@@ -9,10 +9,6 @@
 
 #include <inttypes.h>
 
-#define MIN(a, b) (a) < (b) ? (a) : (b)
-#define MAX(a, b) (a) > (b) ? (a) : (b)
-#define WITHIN(x, a, b) (((x) > (a)) && ((x) < (b)))
-
 #define PROGRESS_VISUALIZATION_RADIAL_THICKNESS PBL_IF_RECT_ELSE(10, 15)
 #define PROGRESS_GOAL_TEXT_MAX_STRING_LENGTH 6
 
@@ -76,8 +72,8 @@ static void prv_progress_visualization_layer_update_proc(Layer *layer, GContext*
   const GOvalScaleMode oval_scale_mode = GOvalScaleModeFitCircle;
 
   const bool ring_pulse_animation_in_progress =
-    WITHIN(data->intro_animation_state.intro_ring_pulse_animation_progress, 0,
-           ANIMATION_NORMALIZED_MAX);
+    WITHIN(data->intro_animation_state.intro_ring_pulse_animation_progress, 1,
+           ANIMATION_NORMALIZED_MAX - 1);
   if (!ring_pulse_animation_in_progress) {
     graphics_context_set_fill_color(ctx, GColorLightGray);
     graphics_fill_radial(ctx, layer_bounds, oval_scale_mode,

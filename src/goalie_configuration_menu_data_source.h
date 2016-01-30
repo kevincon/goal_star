@@ -1,6 +1,7 @@
 #pragma once
 
 #include "goalie_configuration_option_menu_window.h"
+#include "goalie_number_window.h"
 
 #include <pebble.h>
 
@@ -31,7 +32,8 @@ typedef struct {
       GoalieConfigurationMenuDataSourceOptionNumberGetNumberCallback get_lower_bound;
       GoalieConfigurationMenuDataSourceOptionNumberGetNumberCallback get_upper_bound;
       GoalieConfigurationMenuDataSourceOptionNumberGetNumberCallback get_current_value;
-      NumberWindowCallback number_selected;
+      // TODO replace with SDK NumberWindow once it gets updated to support larger numbers
+      GoalieNumberWindowCallback number_selected;
     } number_callbacks;
   };
 } GoalieConfigurationMenuDataSourceOption;

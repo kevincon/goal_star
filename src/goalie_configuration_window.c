@@ -2,6 +2,7 @@
 
 #include "goalie_configuration_menu_data_source.h"
 #include "goalie_configuration_option_menu_window.h"
+#include "goalie_number_window.h"
 
 #include <pebble.h>
 
@@ -11,7 +12,8 @@ typedef struct {
   Window *window;
   TextLayer *title_layer;
   MenuLayer *menu_layer;
-  NumberWindow *number_window;
+  // TODO replace with SDK NumberWindow once it gets updated to support larger numbers
+  GoalieNumberWindow *number_window;
 } GoalieConfigurationWindowData;
 
 static uint16_t prv_menu_layer_get_num_rows_callback(MenuLayer *menu_layer, uint16_t section_index,
@@ -70,17 +72,19 @@ static void prv_menu_layer_select_callback(MenuLayer *menu_layer, MenuIndex *cel
       break;
     }
     case GoalieConfigurationMenuDataSourceOptionType_Number: {
-      number_window_destroy(data->number_window);
-      data->number_window = number_window_create(option->title, (NumberWindowCallbacks) {
+      // TODO replace with SDK NumberWindow once it gets updated to support larger numbers
+      goalie_number_window_destroy(data->number_window);
+      data->number_window = goalie_number_window_create(option->title,
+                                                        (GoalieNumberWindowCallbacks) {
         .selected = option->number_callbacks.number_selected,
       }, data);
-      NumberWindow *number_window = data->number_window;
-      number_window_set_value(number_window, option->number_callbacks.get_current_value());
-      number_window_set_min(number_window, option->number_callbacks.get_lower_bound());
-      number_window_set_max(number_window, option->number_callbacks.get_upper_bound());
-      number_window_set_step_size(number_window, 100);
+      GoalieNumberWindow *number_window = data->number_window;
+      goalie_number_window_set_value(number_window, option->number_callbacks.get_current_value());
+      goalie_number_window_set_min(number_window, option->number_callbacks.get_lower_bound());
+      goalie_number_window_set_max(number_window, option->number_callbacks.get_upper_bound());
+      goalie_number_window_set_step_size(number_window, 100);
       const bool animated = true;
-      window_stack_push(number_window_get_window(number_window), animated);
+      window_stack_push(goalie_number_window_get_window(number_window), animated);
       break;
     }
     default:
@@ -137,7 +141,8 @@ static void prv_window_unload(Window *window) {
   GoalieConfigurationWindowData *data = window_get_user_data(window);
 
   if (data) {
-    number_window_destroy(data->number_window);
+    // TODO replace with SDK NumberWindow once it gets updated to support larger numbers
+    goalie_number_window_destroy(data->number_window);
     menu_layer_destroy(data->menu_layer);
     text_layer_destroy(data->title_layer);
     window_destroy(data->window);
