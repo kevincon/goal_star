@@ -1,9 +1,9 @@
-# Goalie
+# Goal Star
 
 A simple Pebble app that lets you set a daily health goal and get notified with vibrations and
 a popup when you reach it.
 
-Goalie runs in the background so you can get notified even if you're not in the app.
+Goal Star runs in the background so you can get notified even if you're not in the app.
 
 Supports Pebble Time, Pebble Time Steel, and Pebble Time Round watches.  
 

@@ -1,4 +1,4 @@
-#include "goalie_configuration_option_menu_window.h"
+#include "goal_star_configuration_option_menu_window.h"
 
 #include <pebble.h>
 
@@ -8,12 +8,12 @@ typedef struct {
   TextLayer *title_layer;
 #endif
   MenuLayer *menu_layer;
-  GoalieConfigurationOptionMenuWindowSettings settings;
-} GoalieConfigurationOptionMenuWindowData;
+  GoalStarConfigurationOptionMenuWindowSettings settings;
+} GoalStarConfigurationOptionMenuWindowData;
 
 static uint16_t prv_menu_layer_get_num_rows_callback(MenuLayer *menu_layer, uint16_t section_index,
                                                      void *context) {
-  GoalieConfigurationOptionMenuWindowData *data = context;
+  GoalStarConfigurationOptionMenuWindowData *data = context;
   return data->settings.callbacks.get_num_choices();
 }
 
@@ -21,8 +21,8 @@ static void prv_menu_layer_draw_row_callback(GContext *ctx, const Layer *cell_la
                                              MenuIndex *cell_index, void *context) {
   const bool row_is_highlighted = menu_cell_layer_is_highlighted(cell_layer);
 
-  GoalieConfigurationOptionMenuWindowData *data = context;
-  char title[GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH] = {0};
+  GoalStarConfigurationOptionMenuWindowData *data = context;
+  char title[GOAL_STAR_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH] = {0};
   data->settings.callbacks.get_string_for_index(cell_index->row, title);
 
   const GRect cell_layer_bounds = layer_get_bounds(cell_layer);
@@ -51,7 +51,8 @@ static void prv_menu_layer_draw_row_callback(GContext *ctx, const Layer *cell_la
   const GRect radio_button_container_frame = grect_inset(
     cell_layer_bounds,
     GEdgeInsets(0, 0, 0,
-                inset_cell_layer_bounds.origin.x + inset_cell_layer_bounds.size.w + radio_button_horizontal_padding));
+                inset_cell_layer_bounds.origin.x + inset_cell_layer_bounds.size.w +
+                  radio_button_horizontal_padding));
   GRect radio_button_frame = (GRect) { .size = GSize(radio_button_radius * 2,
                                                      radio_button_radius * 2) };
   const GAlign radio_button_alignment = PBL_IF_RECT_ELSE(GAlignCenter, GAlignLeft);
@@ -84,7 +85,7 @@ static int16_t prv_menu_layer_get_cell_height(MenuLayer *menu_layer, MenuIndex *
 
 static void prv_menu_layer_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index,
                                            void *context) {
-  GoalieConfigurationOptionMenuWindowData *data = context;
+  GoalStarConfigurationOptionMenuWindowData *data = context;
   if (data->settings.callbacks.choice_made) {
     data->settings.callbacks.choice_made(cell_index->row);
   }
@@ -93,7 +94,7 @@ static void prv_menu_layer_select_callback(MenuLayer *menu_layer, MenuIndex *cel
 }
 
 static void prv_window_load(Window *window) {
-  GoalieConfigurationOptionMenuWindowData *data = window_get_user_data(window);
+  GoalStarConfigurationOptionMenuWindowData *data = window_get_user_data(window);
   if (!data) {
     return;
   }
@@ -139,7 +140,7 @@ static void prv_window_load(Window *window) {
 }
 
 static void prv_window_unload(Window *window) {
-  GoalieConfigurationOptionMenuWindowData *data = window_get_user_data(window);
+  GoalStarConfigurationOptionMenuWindowData *data = window_get_user_data(window);
 
   if (data) {
     menu_layer_destroy(data->menu_layer);
@@ -152,13 +153,13 @@ static void prv_window_unload(Window *window) {
   free(data);
 }
 
-void goalie_configuration_option_menu_window_push(
-  const GoalieConfigurationOptionMenuWindowSettings *settings) {
+void goal_star_configuration_option_menu_window_push(
+  const GoalStarConfigurationOptionMenuWindowSettings *settings) {
   if (!settings) {
     return;
   }
 
-  GoalieConfigurationOptionMenuWindowData *data = calloc(1, sizeof(*data));
+  GoalStarConfigurationOptionMenuWindowData *data = calloc(1, sizeof(*data));
   if (!data) {
     return;
   }

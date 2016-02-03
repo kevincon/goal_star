@@ -1,6 +1,6 @@
-#include "goalie_goal_event_window.h"
+#include "goal_star_goal_event_window.h"
 
-#include "../common/goalie_configuration.h"
+#include "../common/goal_star_configuration.h"
 
 #include <pebble.h>
 
@@ -15,10 +15,10 @@ typedef struct {
   GDrawCommandSequence *goal_reached_sequence;
   uint32_t goal_reached_sequence_frame_index;
   AppTimer *goal_reached_sequence_timer;
-} GoalieGoalEventWindowData;
+} GoalStarGoalEventWindowData;
 
 static void prv_goal_reached_wait_timer_handler(void *context) {
-  GoalieGoalEventWindowData *data = context;
+  GoalStarGoalEventWindowData *data = context;
   if (data) {
     data->goal_reached_sequence_timer = NULL;
   }
@@ -26,7 +26,7 @@ static void prv_goal_reached_wait_timer_handler(void *context) {
 }
 
 static void prv_goal_reached_sequence_layer_update_proc(Layer *layer, GContext *ctx) {
-  GoalieGoalEventWindowData *data = window_get_user_data(layer_get_window(layer));
+  GoalStarGoalEventWindowData *data = window_get_user_data(layer_get_window(layer));
   const GRect layer_bounds = layer_get_bounds(layer);
 
   GRect sequence_frame = (GRect) {
@@ -44,7 +44,7 @@ static void prv_goal_reached_sequence_layer_update_proc(Layer *layer, GContext *
   const uint32_t num_frames = gdraw_command_sequence_get_num_frames(data->goal_reached_sequence);
   if (++data->goal_reached_sequence_frame_index >= num_frames) {
     app_timer_cancel(data->goal_reached_sequence_timer);
-    const uint32_t timeout_ms = goalie_configuration_get_goal_event_timeout_ms();
+    const uint32_t timeout_ms = goal_star_configuration_get_goal_event_timeout_ms();
     if (timeout_ms) {
       data->goal_reached_sequence_timer = app_timer_register(timeout_ms,
                                                              prv_goal_reached_wait_timer_handler,
@@ -52,8 +52,8 @@ static void prv_goal_reached_sequence_layer_update_proc(Layer *layer, GContext *
     }
   }
 
-  char text[GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH] = {0};
-  goalie_configuration_get_goal_summary_string(text);
+  char text[GOAL_STAR_CONFIGURATION_STRING_BUFFER_LENGTH] = {0};
+  goal_star_configuration_get_goal_summary_string(text);
   graphics_context_set_text_color(ctx, GColorBlack);
   const GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD);
   const int16_t font_height = 24;
@@ -64,7 +64,7 @@ static void prv_goal_reached_sequence_layer_update_proc(Layer *layer, GContext *
 }
 
 static void prv_goal_reached_sequence_timer_handler(void *context) {
-  GoalieGoalEventWindowData *data = context;
+  GoalStarGoalEventWindowData *data = context;
   if (data) {
     layer_mark_dirty(data->goal_reached_sequence_layer);
     data->goal_reached_sequence_timer = app_timer_register(ANIMATION_FRAME_INTERVAL_MS,
@@ -104,7 +104,7 @@ static void prv_vibrate(void) {
 }
 
 static void prv_window_load(Window *window) {
-  GoalieGoalEventWindowData *data = window_get_user_data(window);
+  GoalStarGoalEventWindowData *data = window_get_user_data(window);
   if (!data) {
     return;
   }
@@ -129,7 +129,7 @@ static void prv_window_load(Window *window) {
 }
 
 static void prv_window_unload(Window *window) {
-  GoalieGoalEventWindowData *data = window_get_user_data(window);
+  GoalStarGoalEventWindowData *data = window_get_user_data(window);
 
   if (data) {
     if (data->goal_reached_sequence_timer) {
@@ -151,8 +151,8 @@ static void prv_click_config_provider(void *context) {
   window_single_click_subscribe(BUTTON_ID_SELECT, prv_select_click_handler);
 }
 
-void goalie_goal_event_window_push(void) {
-  GoalieGoalEventWindowData *data = calloc(1, sizeof(*data));
+void goal_star_goal_event_window_push(void) {
+  GoalStarGoalEventWindowData *data = calloc(1, sizeof(*data));
   if (!data) {
     return;
   }

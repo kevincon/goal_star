@@ -1,9 +1,9 @@
-#include "goalie_progress_window.h"
+#include "goal_star_progress_window.h"
 
-#include "../common/goalie_configuration.h"
-#include "goalie_configuration_window.h"
-#include "goalie_goal_event_window.h"
-#include "goalie_prompt_window.h"
+#include "../common/goal_star_configuration.h"
+#include "goal_star_configuration_window.h"
+#include "goal_star_goal_event_window.h"
+#include "goal_star_prompt_window.h"
 
 #include <pebble.h>
 
@@ -28,7 +28,7 @@ typedef struct {
     bool vibrated_during_intro_ring_pulse_animation;
   } intro_animation_state;
   HealthValue current_progress;
-} GoalieProgressWindowData;
+} GoalStarProgressWindowData;
 
 static int64_t prv_interpolate_int64_linear(int64_t from, int64_t to, AnimationProgress progress) {
   return from + ((progress * (to - from)) / ANIMATION_NORMALIZED_MAX);
@@ -40,14 +40,14 @@ static AnimationProgress prv_rescale_animation_progress(AnimationProgress progre
   return (AnimationProgress)((progress - start) * ANIMATION_NORMALIZED_MAX) / (end - start);
 }
 
-static HealthValue prv_get_current_progress_towards_goal(const GoalieProgressWindowData *data) {
-  const HealthValue goal = goalie_configuration_get_goal_value();
+static HealthValue prv_get_current_progress_towards_goal(const GoalStarProgressWindowData *data) {
+  const HealthValue goal = goal_star_configuration_get_goal_value();
   return MIN((uint32_t)data->current_progress, (uint32_t)goal);
 }
 
-static void prv_get_animated_progress_towards_goal_as_string(const GoalieProgressWindowData *data,
+static void prv_get_animated_progress_towards_goal_as_string(const GoalStarProgressWindowData *data,
                                                              char *buffer) {
-  const HealthValue goal = goalie_configuration_get_goal_value();
+  const HealthValue goal = goal_star_configuration_get_goal_value();
 
   uint32_t animated_progress = 0;
   if (data->intro_animation_state.intro_text_post_pulse_animation_progress) {
@@ -64,8 +64,8 @@ static void prv_get_animated_progress_towards_goal_as_string(const GoalieProgres
   snprintf(buffer, PROGRESS_GOAL_TEXT_MAX_STRING_LENGTH + 1, "%"PRIu32"", animated_progress);
 }
 
-static void prv_progress_visualization_layer_update_proc(Layer *layer, GContext* ctx) {
-  const GoalieProgressWindowData *data = window_get_user_data(layer_get_window(layer));
+static void prv_progress_visualization_layer_update_proc(Layer *layer, GContext *ctx) {
+  const GoalStarProgressWindowData *data = window_get_user_data(layer_get_window(layer));
   const GRect layer_bounds = layer_get_bounds(layer);
 
   GRect radial_frame = layer_bounds;
@@ -86,7 +86,7 @@ static void prv_progress_visualization_layer_update_proc(Layer *layer, GContext*
     (uint32_t)prv_interpolate_int64_linear(
       0, current_progress, data->intro_animation_state.intro_ring_fill_animation_progress);
 
-  const HealthValue goal = goalie_configuration_get_goal_value();
+  const HealthValue goal = goal_star_configuration_get_goal_value();
 
   const uint32_t progress_percentage = animated_progress * 100 / goal;
   const int32_t progress_angle_end = progress_percentage * TRIG_MAX_ANGLE / 100;
@@ -145,7 +145,7 @@ static GRect prv_create_rect_aligned_inside_rect_with_height(const GRect *inside
 }
 
 static void prv_progress_text_layer_update_proc(Layer *layer, GContext *ctx) {
-  const GoalieProgressWindowData *data = window_get_user_data(layer_get_window(layer));
+  const GoalStarProgressWindowData *data = window_get_user_data(layer_get_window(layer));
   const GRect layer_bounds = layer_get_bounds(layer);
 
   graphics_context_set_text_color(ctx, GColorBlack);
@@ -177,13 +177,14 @@ static void prv_progress_text_layer_update_proc(Layer *layer, GContext *ctx) {
                      text_overflow_mode, text_alignment, NULL);
 
   // Draw the text for the goal type label
-  char goal_type_string[GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH] = {0};
-  goalie_configuration_get_goal_type_units_string(goal_type_string, true /* all caps */);
+  char goal_type_string[GOAL_STAR_CONFIGURATION_STRING_BUFFER_LENGTH] = {0};
+  goal_star_configuration_get_goal_type_units_string(goal_type_string, true /* all caps */);
   const GRect goal_progress_type_text_frame = prv_create_rect_aligned_inside_rect_with_height(
     &text_container_frame, goal_progress_type_font_height, GAlignBottom);
   graphics_draw_text(ctx, goal_type_string, goal_progress_type_font, goal_progress_type_text_frame,
                      text_overflow_mode, text_alignment, NULL);
 }
+
 static GRect prv_get_rect_inscribed_in_circle_circumscribed_in_rect(
   const GRect *circumscribed_in_rect, int16_t circle_inset_thickness) {
   if (!circumscribed_in_rect) {
@@ -204,7 +205,7 @@ static GRect prv_get_rect_inscribed_in_circle_circumscribed_in_rect(
 }
 
 static void prv_config_hint_timer_handler(void *context) {
-  GoalieProgressWindowData *data = context;
+  GoalStarProgressWindowData *data = context;
   layer_set_hidden(data->config_hint_text_layer, true);
   data->config_hint_timer = NULL;
 }
@@ -212,7 +213,7 @@ static void prv_config_hint_timer_handler(void *context) {
 static void prv_intro_text_animation_update(Animation *animation,
                                             const AnimationProgress progress) {
   const Window *top_window = window_stack_get_top_window();
-  GoalieProgressWindowData *data = window_get_user_data(top_window);
+  GoalStarProgressWindowData *data = window_get_user_data(top_window);
   if (data) {
     data->intro_animation_state.intro_text_animation_progress = progress;
     layer_mark_dirty(data->progress_text_layer);
@@ -226,7 +227,7 @@ static const AnimationImplementation s_intro_text_animation_implementation = {
 static void prv_intro_ring_fill_animation_update(Animation *animation,
                                                  const AnimationProgress progress) {
   const Window *top_window = window_stack_get_top_window();
-  GoalieProgressWindowData *data = window_get_user_data(top_window);
+  GoalStarProgressWindowData *data = window_get_user_data(top_window);
   if (data) {
     data->intro_animation_state.intro_ring_fill_animation_progress = progress;
     layer_mark_dirty(data->progress_visualization_layer);
@@ -240,7 +241,7 @@ static const AnimationImplementation s_intro_ring_fill_animation_implementation 
 static void prv_intro_ring_pulse_animation_update(Animation *animation,
                                                   const AnimationProgress progress) {
   const Window *top_window = window_stack_get_top_window();
-  GoalieProgressWindowData *data = window_get_user_data(top_window);
+  GoalStarProgressWindowData *data = window_get_user_data(top_window);
   if (data) {
     data->intro_animation_state.intro_ring_pulse_animation_progress = progress;
     layer_mark_dirty(data->progress_visualization_layer);
@@ -259,7 +260,7 @@ static const AnimationImplementation s_intro_ring_pulse_animation_implementation
 static void prv_intro_text_post_pulse_animation_update(Animation *animation,
                                                        const AnimationProgress progress) {
   const Window *top_window = window_stack_get_top_window();
-  GoalieProgressWindowData *data = window_get_user_data(top_window);
+  GoalStarProgressWindowData *data = window_get_user_data(top_window);
   if (data) {
     data->intro_animation_state.intro_text_post_pulse_animation_progress = progress;
     layer_mark_dirty(data->progress_text_layer);
@@ -271,20 +272,20 @@ static const AnimationImplementation s_intro_text_post_pulse_animation_implement
 };
 
 static HealthValue prv_get_current_progress(void) {
-  const HealthMetric goal_type = goalie_configuration_get_goal_type();
+  const HealthMetric goal_type = goal_star_configuration_get_goal_type();
   return health_service_sum_today(goal_type);
 }
 
 static void prv_health_event_handler(HealthEventType event, void *context) {
-  GoalieProgressWindowData *data = context;
+  GoalStarProgressWindowData *data = context;
   if (!data) {
     return;
   }
   if (event == HealthEventMovementUpdate) {
     const HealthValue new_progress = prv_get_current_progress();
-    const HealthValue goal = goalie_configuration_get_goal_value();
+    const HealthValue goal = goal_star_configuration_get_goal_value();
     if (data->current_progress < goal && new_progress >= goal) {
-      goalie_goal_event_window_push();
+      goal_star_goal_event_window_push();
     }
     data->current_progress = new_progress;
     layer_mark_dirty(window_get_root_layer(data->window));
@@ -292,7 +293,7 @@ static void prv_health_event_handler(HealthEventType event, void *context) {
 }
 
 static Animation *prv_create_intro_animation(HealthValue current_progress) {
-  const HealthValue goal = goalie_configuration_get_goal_value();
+  const HealthValue goal = goal_star_configuration_get_goal_value();
 
   const uint32_t intro_ring_animation_duration_ms = 1000;
 
@@ -342,7 +343,7 @@ static Animation *prv_create_intro_animation(HealthValue current_progress) {
 }
 
 static void prv_window_appear(Window *window) {
-  GoalieProgressWindowData *data = window_get_user_data(window);
+  GoalStarProgressWindowData *data = window_get_user_data(window);
 
   const HealthValue current_progress = prv_get_current_progress();
 
@@ -361,7 +362,7 @@ static void prv_window_appear(Window *window) {
 
   // Show/hide the clock time as needed
   layer_set_hidden(status_bar_layer_get_layer(data->status_bar_layer),
-                   !goalie_configuration_get_clock_time_enabled());
+                   !goal_star_configuration_get_clock_time_enabled());
 
   // Reset the state needed for the intro animation
   memset(&data->intro_animation_state, 0, sizeof(data->intro_animation_state));
@@ -374,17 +375,17 @@ static void prv_did_focus_handler(bool in_focus) {
     psleep(last_chance_ms);
     if (!app_worker_is_running()) {
       window_stack_pop(true /* animated */);
-      goalie_prompt_window_push();
+      goal_star_prompt_window_push();
     } else {
       Window *window = window_stack_get_top_window();
-      GoalieProgressWindowData *data = window_get_user_data(window);
+      GoalStarProgressWindowData *data = window_get_user_data(window);
       layer_mark_dirty(window_get_root_layer(data->window));
     }
   }
 }
 
 static void prv_window_load(Window *window) {
-  GoalieProgressWindowData *data = window_get_user_data(window);
+  GoalStarProgressWindowData *data = window_get_user_data(window);
   if (!data) {
     return;
   }
@@ -446,7 +447,7 @@ static void prv_window_load(Window *window) {
 }
 
 static void prv_window_disappear(Window *window) {
-  GoalieProgressWindowData *data = window_get_user_data(window);
+  GoalStarProgressWindowData *data = window_get_user_data(window);
 
   if (data->intro_animation) {
     animation_unschedule(data->intro_animation);
@@ -456,7 +457,7 @@ static void prv_window_disappear(Window *window) {
 }
 
 static void prv_window_unload(Window *window) {
-  GoalieProgressWindowData *data = window_get_user_data(window);
+  GoalStarProgressWindowData *data = window_get_user_data(window);
 
   if (data) {
     if (data->config_hint_timer) {
@@ -475,15 +476,15 @@ static void prv_window_unload(Window *window) {
 }
 
 static void prv_window_select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  goalie_configuration_window_push();
+  goal_star_configuration_window_push();
 }
 
 static void prv_window_click_config_provider(void *context) {
   window_single_click_subscribe(BUTTON_ID_SELECT, prv_window_select_click_handler);
 }
 
-void goalie_progress_window_push(void) {
-  GoalieProgressWindowData *data = calloc(1, sizeof(*data));
+void goal_star_progress_window_push(void) {
+  GoalStarProgressWindowData *data = calloc(1, sizeof(*data));
   if (!data) {
     return;
   }

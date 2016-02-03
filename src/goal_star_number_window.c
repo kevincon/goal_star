@@ -1,26 +1,26 @@
-#include "goalie_number_window.h"
+#include "goal_star_number_window.h"
 
-#include "../common/goalie_configuration.h"
+#include "../common/goal_star_configuration.h"
 
 #include <inttypes.h>
 
-#define GOALIE_NUMBER_WINDOW_MIN ((int32_t)-999999)
-#define GOALIE_NUMBER_WINDOW_MAX ((int32_t)999999)
+#define GOAL_STAR_NUMBER_WINDOW_MIN ((int32_t)-999999)
+#define GOAL_STAR_NUMBER_WINDOW_MAX ((int32_t)999999)
 
 // length of "-999999" (7) + 3 for "..." (truncation ellipsis, if necessary) + 1 for null terminator
-#define GOALIE_NUMBER_WINDOW_VALUE_STRING_MAX_SIZE (11)
+#define GOAL_STAR_NUMBER_WINDOW_VALUE_STRING_MAX_SIZE (11)
 
-struct GoalieNumberWindow {
+struct GoalStarNumberWindow {
   Window *window;
   TextLayer *label_text_layer;
   const char *label;
   TextLayer *value_text_layer;
-  char value_text[GOALIE_NUMBER_WINDOW_VALUE_STRING_MAX_SIZE];
+  char value_text[GOAL_STAR_NUMBER_WINDOW_VALUE_STRING_MAX_SIZE];
   ActionBarLayer *action_bar_layer;
   GBitmap *up_icon;
   GBitmap *checkmark_icon;
   GBitmap *down_icon;
-  GoalieNumberWindowCallbacks callbacks;
+  GoalStarNumberWindowCallbacks callbacks;
   void *callback_context;
   int32_t value;
   int32_t min;
@@ -29,20 +29,20 @@ struct GoalieNumberWindow {
 };
 
 static void prv_select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  GoalieNumberWindow *number_window = context;
+  GoalStarNumberWindow *number_window = context;
   if (number_window && number_window->callbacks.selected) {
     number_window->callbacks.selected(number_window, number_window->callback_context);
   }
 }
 
 static void prv_up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  GoalieNumberWindow *number_window = context;
-  goalie_number_window_set_value(number_window, number_window->value + number_window->step_size);
+  GoalStarNumberWindow *number_window = context;
+  goal_star_number_window_set_value(number_window, number_window->value + number_window->step_size);
 }
 
 static void prv_down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  GoalieNumberWindow *number_window = context;
-  goalie_number_window_set_value(number_window, number_window->value - number_window->step_size);
+  GoalStarNumberWindow *number_window = context;
+  goal_star_number_window_set_value(number_window, number_window->value - number_window->step_size);
 }
 
 static void prv_click_config_provider(void *context) {
@@ -82,7 +82,7 @@ static const char *prv_get_font_key_for_value(int32_t value) {
 #endif
 }
 
-static void prv_update_value_text_layer(GoalieNumberWindow *number_window) {
+static void prv_update_value_text_layer(GoalStarNumberWindow *number_window) {
   if (!number_window || !number_window->value_text_layer) {
     return;
   }
@@ -93,7 +93,7 @@ static void prv_update_value_text_layer(GoalieNumberWindow *number_window) {
 }
 
 static void prv_window_load(Window *window) {
-  GoalieNumberWindow *number_window = window_get_user_data(window);
+  GoalStarNumberWindow *number_window = window_get_user_data(window);
   if (!number_window) {
     return;
   }
@@ -159,7 +159,7 @@ static void prv_window_load(Window *window) {
 }
 
 static void prv_window_unload(Window *window) {
-  GoalieNumberWindow *number_window = window_get_user_data(window);
+  GoalStarNumberWindow *number_window = window_get_user_data(window);
   if (number_window) {
     text_layer_destroy(number_window->label_text_layer);
     text_layer_destroy(number_window->value_text_layer);
@@ -170,18 +170,18 @@ static void prv_window_unload(Window *window) {
   }
 }
 
-static void prv_goalie_number_window_init(GoalieNumberWindow *number_window, const char *label,
-                                          GoalieNumberWindowCallbacks callbacks,
-                                          void *callback_context) {
+static void prv_goal_star_number_window_init(GoalStarNumberWindow *number_window, const char *label,
+                                             GoalStarNumberWindowCallbacks callbacks,
+                                             void *callback_context) {
   if (!number_window) {
     return;
   }
 
-  *number_window = (GoalieNumberWindow) {
+  *number_window = (GoalStarNumberWindow) {
     .label = label,
     .value = 0,
-    .min = GOALIE_NUMBER_WINDOW_MIN,
-    .max = GOALIE_NUMBER_WINDOW_MAX,
+    .min = GOAL_STAR_NUMBER_WINDOW_MIN,
+    .max = GOAL_STAR_NUMBER_WINDOW_MAX,
     .step_size = 1,
     .callbacks = callbacks,
     .callback_context = callback_context,
@@ -197,56 +197,56 @@ static void prv_goalie_number_window_init(GoalieNumberWindow *number_window, con
   window_set_user_data(window, number_window);
 }
 
-GoalieNumberWindow *goalie_number_window_create(const char *label,
-                                                GoalieNumberWindowCallbacks callbacks,
-                                                void *callback_context) {
-  GoalieNumberWindow *number_window = calloc(1, sizeof(*number_window));
-  prv_goalie_number_window_init(number_window, label, callbacks, callback_context);
+GoalStarNumberWindow *goal_star_number_window_create(const char *label,
+                                                     GoalStarNumberWindowCallbacks callbacks,
+                                                     void *callback_context) {
+  GoalStarNumberWindow *number_window = calloc(1, sizeof(*number_window));
+  prv_goal_star_number_window_init(number_window, label, callbacks, callback_context);
   return number_window;
 }
 
-void goalie_number_window_destroy(GoalieNumberWindow *number_window) {
+void goal_star_number_window_destroy(GoalStarNumberWindow *number_window) {
   free(number_window);
 }
 
-void goalie_number_window_set_label(GoalieNumberWindow *number_window, const char *label) {
+void goal_star_number_window_set_label(GoalStarNumberWindow *number_window, const char *label) {
   if (number_window) {
     text_layer_set_text(number_window->label_text_layer, label);
   }
 }
 
-void goalie_number_window_set_max(GoalieNumberWindow *number_window, int32_t max) {
+void goal_star_number_window_set_max(GoalStarNumberWindow *number_window, int32_t max) {
   if (number_window && (max != number_window->max)) {
-    number_window->max = MIN(max, GOALIE_NUMBER_WINDOW_MAX);
-    goalie_number_window_set_value(number_window, number_window->value);
+    number_window->max = MIN(max, GOAL_STAR_NUMBER_WINDOW_MAX);
+    goal_star_number_window_set_value(number_window, number_window->value);
   }
 }
 
-void goalie_number_window_set_min(GoalieNumberWindow *number_window, int32_t min) {
+void goal_star_number_window_set_min(GoalStarNumberWindow *number_window, int32_t min) {
   if (number_window && (min != number_window->min)) {
-    number_window->min = MAX(min, GOALIE_NUMBER_WINDOW_MIN);
-    goalie_number_window_set_value(number_window, number_window->value);
+    number_window->min = MAX(min, GOAL_STAR_NUMBER_WINDOW_MIN);
+    goal_star_number_window_set_value(number_window, number_window->value);
   }
 }
 
-void goalie_number_window_set_value(GoalieNumberWindow *number_window, int32_t value) {
+void goal_star_number_window_set_value(GoalStarNumberWindow *number_window, int32_t value) {
   if (number_window &&
       (value != number_window->value) &&
       WITHIN(value, number_window->min, number_window->max)) {
     number_window->value = value;
-    snprintf(number_window->value_text, GOALIE_CONFIGURATION_STRING_BUFFER_LENGTH, "%"PRId32"",
+    snprintf(number_window->value_text, GOAL_STAR_CONFIGURATION_STRING_BUFFER_LENGTH, "%"PRId32"",
              number_window->value);
     prv_update_value_text_layer(number_window);
   }
 }
 
-void goalie_number_window_set_step_size(GoalieNumberWindow *number_window, int32_t step) {
+void goal_star_number_window_set_step_size(GoalStarNumberWindow *number_window, int32_t step) {
   if (number_window) {
     number_window->step_size = step;
   }
 }
 
-int32_t goalie_number_window_get_value(const GoalieNumberWindow *number_window) {
+int32_t goal_star_number_window_get_value(const GoalStarNumberWindow *number_window) {
   if (!number_window) {
     return 0;
   }
@@ -254,7 +254,7 @@ int32_t goalie_number_window_get_value(const GoalieNumberWindow *number_window) 
   return number_window->value;
 }
 
-Window *goalie_number_window_get_window(GoalieNumberWindow *number_window) {
+Window *goal_star_number_window_get_window(GoalStarNumberWindow *number_window) {
   if (!number_window) {
     return NULL;
   }

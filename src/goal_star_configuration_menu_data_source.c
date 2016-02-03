@@ -1,6 +1,6 @@
-#include "goalie_configuration_menu_data_source.h"
+#include "goal_star_configuration_menu_data_source.h"
 
-#include "../common/goalie_configuration.h"
+#include "../common/goal_star_configuration.h"
 
 #define MAKE_CHOICE_STRUCT(TYPE) \
 typedef struct { \
@@ -29,21 +29,21 @@ static uint16_t prv_goal_type_get_num_choices(void) {
 }
 
 static void prv_goal_type_get_string_for_index(
-  uint16_t index, char result[GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH]) {
+  uint16_t index, char result[GOAL_STAR_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH]) {
   if (!result) {
     return;
   }
 
   strncpy(result, s_goal_type_options[index].choice_name,
-          GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH);
+          GOAL_STAR_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH);
 }
 
 static void prv_goal_type_choice_made(uint16_t choice_index) {
-  goalie_configuration_set_goal_type(s_goal_type_options[choice_index].choice_value);
+  goal_star_configuration_set_goal_type(s_goal_type_options[choice_index].choice_value);
 }
 
 static int16_t prv_goal_type_get_index_of_current_choice(void) {
-  const HealthMetric current_goal_type = goalie_configuration_get_goal_type();
+  const HealthMetric current_goal_type = goal_star_configuration_get_goal_type();
   for (unsigned int choice_index = 0; choice_index < ARRAY_LENGTH(s_goal_type_options);
        choice_index++) {
     if (s_goal_type_options[choice_index].choice_value == current_goal_type) {
@@ -64,16 +64,16 @@ static int32_t prv_goal_value_get_upper_bound(void) {
   return 100000;
 }
 
-static void prv_goal_value_number_selected(GoalieNumberWindow *number_window, void *context) {
+static void prv_goal_value_number_selected(GoalStarNumberWindow *number_window, void *context) {
   // TODO replace with SDK NumberWindow once it gets updated to support larger numbers
-  goalie_configuration_set_goal_value(goalie_number_window_get_value(number_window));
+  goal_star_configuration_set_goal_value(goal_star_number_window_get_value(number_window));
 
   const bool animated = true;
   window_stack_pop(animated);
 }
 
 static int32_t prv_goal_value_get_current_value(void) {
-  return goalie_configuration_get_goal_value();
+  return goal_star_configuration_get_goal_value();
 }
 
 // Goal Event Window Timeout
@@ -131,22 +131,22 @@ static uint16_t prv_goal_event_timeout_ms_get_num_choices(void) {
 }
 
 static void prv_goal_event_timeout_ms_get_string_for_index(
-  uint16_t index, char result[GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH]) {
+  uint16_t index, char result[GOAL_STAR_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH]) {
   if (!result) {
     return;
   }
 
   strncpy(result, s_goal_event_timeout_ms_options[index].choice_name,
-          GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH);
+          GOAL_STAR_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH);
 }
 
 static void prv_goal_event_timeout_ms_choice_made(uint16_t choice_index) {
-  goalie_configuration_set_goal_event_timeout_ms(
+  goal_star_configuration_set_goal_event_timeout_ms(
     s_goal_event_timeout_ms_options[choice_index].choice_value);
 }
 
 static int16_t prv_goal_event_timeout_ms_get_index_of_current_choice(void) {
-  const uint32_t current_goal_event_timeout_ms = goalie_configuration_get_goal_event_timeout_ms();
+  const uint32_t current_goal_event_timeout_ms = goal_star_configuration_get_goal_event_timeout_ms();
   for (unsigned int choice_index = 0; choice_index < ARRAY_LENGTH(s_goal_event_timeout_ms_options);
        choice_index++) {
     if (s_goal_event_timeout_ms_options[choice_index].choice_value ==
@@ -168,34 +168,34 @@ static uint16_t prv_bool_get_num_choices(void) {
 }
 
 static void prv_bool_get_string_for_index(
-  uint16_t index, char result[GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH]) {
+  uint16_t index, char result[GOAL_STAR_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH]) {
   if (!result) {
     return;
   }
 
   strncpy(result, (index == ON_INDEX) ? "Enabled" : "Disabled",
-          GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH);
+          GOAL_STAR_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH);
 }
 
 // Show clock time
 ///////////////////
 
 static void prv_clock_time_enabled_choice_made(uint16_t choice_index) {
-  goalie_configuration_set_clock_time_enabled((choice_index == ON_INDEX));
+  goal_star_configuration_set_clock_time_enabled((choice_index == ON_INDEX));
 }
 
 static int16_t prv_clock_time_enabled_get_index_of_current_choice(void) {
-  const bool current_choice = goalie_configuration_get_clock_time_enabled();
+  const bool current_choice = goal_star_configuration_get_clock_time_enabled();
   return (int16_t)(current_choice ? ON_INDEX : OFF_INDEX);
 }
 
 // Common
 //////////
 
-static const GoalieConfigurationMenuDataSourceOption s_options[] = {
+static const GoalStarConfigurationMenuDataSourceOption s_options[] = {
   {
     .title = "Goal Type",
-    .type = GoalieConfigurationMenuDataSourceOptionType_MultipleChoice,
+    .type = GoalStarConfigurationMenuDataSourceOptionType_MultipleChoice,
     .choice_callbacks = {
       .get_index_of_current_choice = prv_goal_type_get_index_of_current_choice,
       .callbacks = {
@@ -207,7 +207,7 @@ static const GoalieConfigurationMenuDataSourceOption s_options[] = {
   },
   {
     .title = "Goal Value",
-    .type = GoalieConfigurationMenuDataSourceOptionType_Number,
+    .type = GoalStarConfigurationMenuDataSourceOptionType_Number,
     .number_callbacks = {
       .get_lower_bound = prv_goal_value_get_lower_bound,
       .get_upper_bound = prv_goal_value_get_upper_bound,
@@ -217,7 +217,7 @@ static const GoalieConfigurationMenuDataSourceOption s_options[] = {
   },
   {
     .title = "Popup Timeout",
-    .type = GoalieConfigurationMenuDataSourceOptionType_MultipleChoice,
+    .type = GoalStarConfigurationMenuDataSourceOptionType_MultipleChoice,
     .choice_callbacks = {
       .get_index_of_current_choice = prv_goal_event_timeout_ms_get_index_of_current_choice,
       .callbacks = {
@@ -229,7 +229,7 @@ static const GoalieConfigurationMenuDataSourceOption s_options[] = {
   },
   {
     .title = "Show Time",
-    .type = GoalieConfigurationMenuDataSourceOptionType_MultipleChoice,
+    .type = GoalStarConfigurationMenuDataSourceOptionType_MultipleChoice,
     .choice_callbacks = {
       .get_index_of_current_choice = prv_clock_time_enabled_get_index_of_current_choice,
       .callbacks = {
@@ -241,35 +241,35 @@ static const GoalieConfigurationMenuDataSourceOption s_options[] = {
   },
 };
 
-const GoalieConfigurationMenuDataSourceOption *goalie_configuration_menu_data_source_get_option_at_index(
+const GoalStarConfigurationMenuDataSourceOption *goal_star_configuration_menu_data_source_get_option_at_index(
   uint16_t index) {
   return &s_options[index];
 }
 
-uint16_t goalie_configuration_menu_data_source_get_num_options(void) {
+uint16_t goal_star_configuration_menu_data_source_get_num_options(void) {
   return ARRAY_LENGTH(s_options);
 }
 
-void goalie_configuration_menu_data_source_get_current_choice_string_for_option_at_index(
-  uint16_t index, char result[GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH]) {
-  const GoalieConfigurationMenuDataSourceOption *option =
-    goalie_configuration_menu_data_source_get_option_at_index(index);
+void goal_star_configuration_menu_data_source_get_current_choice_string_for_option_at_index(
+  uint16_t index, char result[GOAL_STAR_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH]) {
+  const GoalStarConfigurationMenuDataSourceOption *option =
+    goal_star_configuration_menu_data_source_get_option_at_index(index);
 
   switch (option->type) {
-    case GoalieConfigurationMenuDataSourceOptionType_MultipleChoice: {
+    case GoalStarConfigurationMenuDataSourceOptionType_MultipleChoice: {
       const int16_t current_choice_index =
         option->choice_callbacks.get_index_of_current_choice();
       if (current_choice_index != -1) {
-        char current_choice_string[GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH] =
+        char current_choice_string[GOAL_STAR_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH] =
           {0};
         option->choice_callbacks.callbacks.get_string_for_index((uint16_t)current_choice_index,
                                                                 current_choice_string);
         strncpy(result, current_choice_string,
-                GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH);
+                GOAL_STAR_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH);
       }
       break;
     }
-    case GoalieConfigurationMenuDataSourceOptionType_Number:
+    case GoalStarConfigurationMenuDataSourceOptionType_Number:
       // TODO
       break;
     default:

@@ -1,8 +1,8 @@
-#include "goalie_configuration_window.h"
+#include "goal_star_configuration_window.h"
 
-#include "goalie_configuration_menu_data_source.h"
-#include "goalie_configuration_option_menu_window.h"
-#include "goalie_number_window.h"
+#include "goal_star_configuration_menu_data_source.h"
+#include "goal_star_configuration_option_menu_window.h"
+#include "goal_star_number_window.h"
 
 #include <pebble.h>
 
@@ -13,27 +13,27 @@ typedef struct {
   TextLayer *title_layer;
   MenuLayer *menu_layer;
   // TODO replace with SDK NumberWindow once it gets updated to support larger numbers
-  GoalieNumberWindow *number_window;
-} GoalieConfigurationWindowData;
+  GoalStarNumberWindow *number_window;
+} GoalStarConfigurationWindowData;
 
 static uint16_t prv_menu_layer_get_num_rows_callback(MenuLayer *menu_layer, uint16_t section_index,
                                                      void *context) {
-  return goalie_configuration_menu_data_source_get_num_options();
+  return goal_star_configuration_menu_data_source_get_num_options();
 }
 
 static void prv_menu_layer_draw_row_callback(GContext *ctx, const Layer *cell_layer,
                                              MenuIndex *cell_index, void *context) {
-  const GoalieConfigurationMenuDataSourceOption *option =
-    goalie_configuration_menu_data_source_get_option_at_index(cell_index->row);
-  char subtitle[GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH] = {0};
+  const GoalStarConfigurationMenuDataSourceOption *option =
+    goal_star_configuration_menu_data_source_get_option_at_index(cell_index->row);
+  char subtitle[GOAL_STAR_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH] = {0};
   switch (option->type) {
-    case GoalieConfigurationMenuDataSourceOptionType_MultipleChoice:
-      goalie_configuration_menu_data_source_get_current_choice_string_for_option_at_index(
+    case GoalStarConfigurationMenuDataSourceOptionType_MultipleChoice:
+      goal_star_configuration_menu_data_source_get_current_choice_string_for_option_at_index(
         cell_index->row, subtitle);
       break;
-    case GoalieConfigurationMenuDataSourceOptionType_Number:
-      snprintf(subtitle, GOALIE_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH, "%"PRId32"",
-               option->number_callbacks.get_current_value());
+    case GoalStarConfigurationMenuDataSourceOptionType_Number:
+      snprintf(subtitle, GOAL_STAR_CONFIGURATION_OPTION_MENU_WINDOW_CHOICE_BUFFER_LENGTH,
+               "%"PRId32"", option->number_callbacks.get_current_value());
       break;
     default:
       return;
@@ -54,37 +54,37 @@ static int16_t prv_menu_layer_get_cell_height(MenuLayer *menu_layer, MenuIndex *
 
 static void prv_menu_layer_select_callback(MenuLayer *menu_layer, MenuIndex *cell_index,
                                            void *context) {
-  GoalieConfigurationWindowData *data = context;
-  const GoalieConfigurationMenuDataSourceOption *option =
-    goalie_configuration_menu_data_source_get_option_at_index(cell_index->row);
+  GoalStarConfigurationWindowData *data = context;
+  const GoalStarConfigurationMenuDataSourceOption *option =
+    goal_star_configuration_menu_data_source_get_option_at_index(cell_index->row);
 
   switch (option->type) {
-    case GoalieConfigurationMenuDataSourceOptionType_MultipleChoice: {
+    case GoalStarConfigurationMenuDataSourceOptionType_MultipleChoice: {
       const int16_t current_choice_index = option->choice_callbacks.get_index_of_current_choice();
-      const GoalieConfigurationOptionMenuWindowSettings settings =
-        (GoalieConfigurationOptionMenuWindowSettings) {
+      const GoalStarConfigurationOptionMenuWindowSettings settings =
+        (GoalStarConfigurationOptionMenuWindowSettings) {
           .option_title = option->title,
           .callbacks = option->choice_callbacks.callbacks,
           .current_choice = (current_choice_index == -1) ? (uint16_t)0 :
                                                            (uint16_t)current_choice_index,
         };
-      goalie_configuration_option_menu_window_push(&settings);
+      goal_star_configuration_option_menu_window_push(&settings);
       break;
     }
-    case GoalieConfigurationMenuDataSourceOptionType_Number: {
+    case GoalStarConfigurationMenuDataSourceOptionType_Number: {
       // TODO replace with SDK NumberWindow once it gets updated to support larger numbers
-      goalie_number_window_destroy(data->number_window);
-      data->number_window = goalie_number_window_create(option->title,
-                                                        (GoalieNumberWindowCallbacks) {
+      goal_star_number_window_destroy(data->number_window);
+      data->number_window = goal_star_number_window_create(option->title,
+                                                        (GoalStarNumberWindowCallbacks) {
         .selected = option->number_callbacks.number_selected,
       }, data);
-      GoalieNumberWindow *number_window = data->number_window;
-      goalie_number_window_set_value(number_window, option->number_callbacks.get_current_value());
-      goalie_number_window_set_min(number_window, option->number_callbacks.get_lower_bound());
-      goalie_number_window_set_max(number_window, option->number_callbacks.get_upper_bound());
-      goalie_number_window_set_step_size(number_window, 100);
+      GoalStarNumberWindow *number_window = data->number_window;
+      goal_star_number_window_set_value(number_window, option->number_callbacks.get_current_value());
+      goal_star_number_window_set_min(number_window, option->number_callbacks.get_lower_bound());
+      goal_star_number_window_set_max(number_window, option->number_callbacks.get_upper_bound());
+      goal_star_number_window_set_step_size(number_window, 100);
       const bool animated = true;
-      window_stack_push(goalie_number_window_get_window(number_window), animated);
+      window_stack_push(goal_star_number_window_get_window(number_window), animated);
       break;
     }
     default:
@@ -93,7 +93,7 @@ static void prv_menu_layer_select_callback(MenuLayer *menu_layer, MenuIndex *cel
 }
 
 static void prv_window_load(Window *window) {
-  GoalieConfigurationWindowData *data = window_get_user_data(window);
+  GoalStarConfigurationWindowData *data = window_get_user_data(window);
   if (!data) {
     return;
   }
@@ -115,7 +115,7 @@ static void prv_window_load(Window *window) {
   text_layer_set_background_color(title_layer, GColorClear);
   text_layer_set_text_color(title_layer, GColorBlack);
   text_layer_set_font(title_layer, fonts_get_system_font(FONT_KEY_GOTHIC_14));
-  text_layer_set_text(title_layer, PBL_IF_RECT_ELSE("Goalie Configuration", "Config"));
+  text_layer_set_text(title_layer, PBL_IF_RECT_ELSE("Goal Star Configuration", "Config"));
   layer_add_child(window_root_layer, text_layer_get_layer(title_layer));
 
   const GEdgeInsets menu_layer_insets = PBL_IF_RECT_ELSE(GEdgeInsets(STATUS_BAR_LAYER_HEIGHT, 0, 0),
@@ -138,11 +138,11 @@ static void prv_window_load(Window *window) {
 }
 
 static void prv_window_unload(Window *window) {
-  GoalieConfigurationWindowData *data = window_get_user_data(window);
+  GoalStarConfigurationWindowData *data = window_get_user_data(window);
 
   if (data) {
     // TODO replace with SDK NumberWindow once it gets updated to support larger numbers
-    goalie_number_window_destroy(data->number_window);
+    goal_star_number_window_destroy(data->number_window);
     menu_layer_destroy(data->menu_layer);
     text_layer_destroy(data->title_layer);
     window_destroy(data->window);
@@ -151,8 +151,8 @@ static void prv_window_unload(Window *window) {
   free(data);
 }
 
-void goalie_configuration_window_push(void) {
-  GoalieConfigurationWindowData *data = calloc(1, sizeof(*data));
+void goal_star_configuration_window_push(void) {
+  GoalStarConfigurationWindowData *data = calloc(1, sizeof(*data));
   if (!data) {
     return;
   }

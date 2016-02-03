@@ -1,6 +1,6 @@
-#include "goalie_prompt_window.h"
+#include "goal_star_prompt_window.h"
 
-#include "goalie_progress_window.h"
+#include "goal_star_progress_window.h"
 
 #include <pebble.h>
 
@@ -9,14 +9,14 @@ typedef struct {
   Layer *text_layer;
   ActionBarLayer *action_bar_layer;
   GBitmap *checkmark_icon;
-} GoaliePromptWindowData;
+} GoalStarPromptWindowData;
 
 static void prv_text_layer_update_proc(Layer *layer, GContext* ctx) {
   GTextAttributes *text_attributes = graphics_text_attributes_create();
   graphics_text_attributes_enable_screen_text_flow(text_attributes, 4);
 
-  const char *text = "Click select to make Goalie the background app.\n\nGoalie must run in the "
-                     "background to notify you when you reach your goal.";
+  const char *text = "Click select to make Goal Star the background app.\n\nThat way Goal Star can "
+                     "notify you when you reach your goal.";
 
   const GFont font = fonts_get_system_font(FONT_KEY_GOTHIC_18);
   const GTextAlignment text_alignment = PBL_IF_RECT_ELSE(GTextAlignmentLeft, GTextAlignmentRight);
@@ -25,20 +25,20 @@ static void prv_text_layer_update_proc(Layer *layer, GContext* ctx) {
 }
 
 static void prv_select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  GoaliePromptWindowData *data = context;
+  GoalStarPromptWindowData *data = context;
   const AppWorkerResult result = app_worker_launch();
   const bool animated = false;
   switch (result) {
     case APP_WORKER_RESULT_ALREADY_RUNNING:
     case APP_WORKER_RESULT_ASKING_CONFIRMATION:
     case APP_WORKER_RESULT_SUCCESS:
-      goalie_progress_window_push();
+      goal_star_progress_window_push();
       window_stack_remove(data->window, animated);
       break;
     case APP_WORKER_RESULT_DIFFERENT_APP:
     case APP_WORKER_RESULT_NO_WORKER:
     case APP_WORKER_RESULT_NOT_RUNNING:
-      goalie_prompt_window_push();
+      goal_star_prompt_window_push();
       window_stack_remove(data->window, animated);
       break;
     default:
@@ -53,7 +53,7 @@ static void prv_click_config_provider(void *context) {
 }
 
 static void prv_window_load(Window *window) {
-  GoaliePromptWindowData *data = window_get_user_data(window);
+  GoalStarPromptWindowData *data = window_get_user_data(window);
   if (!data) {
     return;
   }
@@ -82,7 +82,7 @@ static void prv_window_load(Window *window) {
 }
 
 static void prv_window_unload(Window *window) {
-  GoaliePromptWindowData *data = window_get_user_data(window);
+  GoalStarPromptWindowData *data = window_get_user_data(window);
 
   if (data) {
     layer_destroy(data->text_layer);
@@ -94,8 +94,8 @@ static void prv_window_unload(Window *window) {
   free(data);
 }
 
-void goalie_prompt_window_push(void) {
-  GoaliePromptWindowData *data = calloc(1, sizeof(*data));
+void goal_star_prompt_window_push(void) {
+  GoalStarPromptWindowData *data = calloc(1, sizeof(*data));
   if (!data) {
     return;
   }
