@@ -55,3 +55,7 @@ iPhone/Android app with:
 ```
 pebble install --phone IP_ADDRESS
 ```
+
+## Credits
+
+Icon based on ["achievement.svg" by romzicon from The Noun Project](https://thenounproject.com/search/?q=star+ribbon&i=195251). 
