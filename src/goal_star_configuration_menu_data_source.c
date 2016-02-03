@@ -19,7 +19,7 @@ static const HealthMetricChoice s_goal_type_options[] = {
     .choice_value = HealthMetricStepCount,
   },
   {
-    .choice_name = "Distance",
+    .choice_name = "Distance (m)",
     .choice_value = HealthMetricWalkedDistanceMeters,
   }
 };
