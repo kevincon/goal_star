@@ -306,8 +306,8 @@ static Animation *prv_create_intro_animation(HealthValue current_progress) {
 
   Animation *intro_ring_animation = intro_ring_fill_animation;
 
-  const bool past_goal = (current_progress >= goal);
-  if (past_goal) {
+  const bool passed_goal = (current_progress >= goal);
+  if (passed_goal) {
     // If we've reached the goal, pulse the ring after it completes
     Animation *intro_ring_pulse_animation = animation_create();
     animation_set_implementation(intro_ring_pulse_animation,
@@ -329,8 +329,8 @@ static Animation *prv_create_intro_animation(HealthValue current_progress) {
   // (if we have reached the goal, intro_ring_animation also includes a pulse animation in sequence)
   Animation *result = animation_spawn_create(intro_text_animation, intro_ring_animation, NULL);
 
-  if (past_goal) {
-    // If we've past the goal, further animate the text to the current progress past the goal
+  if (passed_goal) {
+    // If we've passed the goal, further animate the text to the current progress passed the goal
     Animation *intro_text_post_pulse_animation = animation_create();
     animation_set_implementation(intro_text_post_pulse_animation,
                                  &s_intro_text_post_pulse_animation_implementation);

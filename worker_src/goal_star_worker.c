@@ -32,6 +32,7 @@ static void prv_message_handler(uint16_t type, AppWorkerMessage *data) {
     }
   }
 }
+
 static void prv_init(void) {
   goal_star_configuration_init();
   health_service_events_subscribe(prv_health_event_handler, NULL);
