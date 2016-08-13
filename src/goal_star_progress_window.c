@@ -4,6 +4,7 @@
 #include "goal_star_configuration_window.h"
 #include "goal_star_goal_event_window.h"
 #include "goal_star_prompt_window.h"
+#include "goal_star_status_bar_layer.h"
 
 #include <pebble.h>
 
@@ -14,7 +15,7 @@
 
 typedef struct {
   Window *window;
-  StatusBarLayer *status_bar_layer;
+  GoalStarStatusBarLayer status_bar_layer;
   Layer *progress_visualization_layer;
   Layer *progress_text_layer;
   Layer *config_hint_text_layer;
@@ -361,7 +362,7 @@ static void prv_window_appear(Window *window) {
   animation_schedule(data->intro_animation);
 
   // Show/hide the clock time as needed
-  layer_set_hidden(status_bar_layer_get_layer(data->status_bar_layer),
+  layer_set_hidden(data->status_bar_layer.layer,
                    !goal_star_configuration_get_clock_time_enabled());
 
   // Reset the state needed for the intro animation
@@ -393,22 +394,23 @@ static void prv_window_load(Window *window) {
   Layer *window_root_layer = window_get_root_layer(window);
   const GRect window_root_layer_bounds = layer_get_bounds(window_root_layer);
 
-  data->status_bar_layer = status_bar_layer_create();
-  StatusBarLayer *status_bar_layer = data->status_bar_layer;
-  status_bar_layer_set_colors(status_bar_layer, GColorClear, GColorBlack);
-  Layer *status_bar_underlying_layer = status_bar_layer_get_layer(status_bar_layer);
+  goal_star_status_bar_layer_init(&data->status_bar_layer, window_root_layer_bounds.size.w);
+  GoalStarStatusBarLayer *status_bar_layer = &data->status_bar_layer;
+  Layer *status_bar_underlying_layer = status_bar_layer->layer;
+  GRect status_bar_layer_frame = layer_get_frame(status_bar_underlying_layer);
 #if PBL_ROUND
   // Move the status bar layer below the top of the ring on round displays
-  GRect status_bar_layer_frame = layer_get_frame(status_bar_underlying_layer);
+  status_bar_layer_frame.origin.y += PROGRESS_VISUALIZATION_RADIAL_THICKNESS;
+#else
   const int16_t text_cap_offset = 5;
-  status_bar_layer_frame.origin.y += PROGRESS_VISUALIZATION_RADIAL_THICKNESS - text_cap_offset;
-  layer_set_frame(status_bar_underlying_layer, status_bar_layer_frame);
+  status_bar_layer_frame.origin.y -= text_cap_offset;
 #endif
+  layer_set_frame(status_bar_underlying_layer, status_bar_layer_frame);
   layer_add_child(window_root_layer, status_bar_underlying_layer);
 
   GRect progress_visualization_layer_frame = window_root_layer_bounds;
 #if PBL_RECT
-  const int16_t back_off_from_edge_inset = 2;
+  const int16_t back_off_from_edge_inset = 3;
   progress_visualization_layer_frame = grect_inset(window_root_layer_bounds,
                                                    GEdgeInsets(back_off_from_edge_inset));
 #endif
@@ -466,7 +468,7 @@ static void prv_window_unload(Window *window) {
     layer_destroy(data->config_hint_text_layer);
     layer_destroy(data->progress_text_layer);
     layer_destroy(data->progress_visualization_layer);
-    status_bar_layer_destroy(data->status_bar_layer);
+    goal_star_status_bar_layer_deinit(&data->status_bar_layer);
     window_destroy(data->window);
   }
 
